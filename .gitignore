@@ -1,0 +1,16 @@
+# Dependencies and build output
+node_modules/
+.next/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+
+# Local configuration and tool state
+.env.local
+.env.*.local
+!.env.example
+.trueforge/
+
+# Temporary reference material; never a ShutterFrame runtime dependency.
+34562572-main/

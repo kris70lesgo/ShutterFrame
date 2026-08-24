@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+:root { color-scheme: dark; }
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: #090d14;
+  color: #dbe5f0;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
+  background-image: linear-gradient(rgba(148,163,184,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,.035) 1px, transparent 1px);
+  background-size: 36px 36px;
+}
+::selection { background: #fcd34d; color: #090d14; }
+.panel { border: 1px solid #263244; background: rgba(15, 23, 42, .78); padding: 1.75rem; box-shadow: 12px 12px 0 rgba(2, 6, 23, .45); }
+.eyebrow { font-size: .7rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: #fcd34d; }
+@media (min-width: 640px) { .panel { padding: 2rem; } }
