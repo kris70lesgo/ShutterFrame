@@ -97,6 +97,7 @@ should hold `GITHUB_TOKEN`; it must not be exposed by Next.js or browser code.
 
 Create a Daytona API key and configure the Daytona sandbox provider in
 TrueForge. Store `DAYTONA_API_KEY` in TrueForge's secret/configuration path.
+The default `DAYTONA_API_URL` is `https://app.daytona.io/api`.
 The future agent uses it only to run migration and validation scripts against a
 temporary Neon branch.
 
@@ -127,7 +128,8 @@ the end-to-end suite: `pnpm exec playwright install chromium`.
 
 See `.env.example`. Only server-side names are used: `TRUEFORGE_BASE_URL`,
 `GROQ_API_KEY`, `NEON_API_KEY`, `NEON_PROJECT_ID`, `GITHUB_TOKEN`,
-`GITHUB_OWNER`, `GITHUB_REPO`, and `DAYTONA_API_KEY`. None use `NEXT_PUBLIC_`.
+`GITHUB_OWNER`, `GITHUB_REPO`, `DAYTONA_API_KEY`, and `DAYTONA_API_URL`. None
+use `NEXT_PUBLIC_`.
 
 ## Development workflow
 
