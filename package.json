@@ -15,6 +15,7 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "doctor": "node scripts/doctor.mjs",
+    "verify:integrations": "node scripts/verify-integrations.mjs",
     "trueforge": "npx @truefoundry/trueforge",
     "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },

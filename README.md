@@ -16,7 +16,7 @@ shape of data. ShutterFrame's intended workflow is:
 ## Architecture
 
 The root Next.js application is the UI and narrow server boundary. TrueForge
-owns agent sessions, OpenAI model calls, MCP access, sandbox use, and approval
+owns agent sessions, Groq model calls, MCP access, sandbox use, and approval
 state. Neon supplies temporary branches; GitHub MCP supplies PR migrations; and
 Daytona executes untrusted migration/test work in isolation. See
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
@@ -34,7 +34,7 @@ Daytona executes untrusted migration/test work in isolation. See
 
 - Node.js 22.13 or newer (`.nvmrc`)
 - Corepack and pnpm 10.28.2
-- An OpenAI API key for TrueForge
+- A Groq API key for TrueForge
 - A Neon development project, GitHub integration, and Daytona account only when
   you are ready to configure those capabilities
 
@@ -59,12 +59,24 @@ This runs the official local TrueForge process at `http://127.0.0.1:8790` using
 its normal local SQLite storage. In a second terminal, run `pnpm run doctor` or
 open the app; both surface whether it is reachable.
 
-## Configuring the model
+## Configuring Groq in TrueForge
 
-Configure OpenAI in TrueForge's local settings using `OPENAI_API_KEY`. TrueForge
-owns model-provider configuration; ShutterFrame does not send that key to the
-browser. The optional `.env.local` value only lets the foundation status panel
-show that setup is present.
+TrueForge owns the model integration. Configure Groq as a custom,
+OpenAI-compatible provider with base URL `https://api.groq.com/openai/v1` and
+the `GROQ_API_KEY` secret. ShutterFrame does not call Groq directly or expose
+the key to the browser. `pnpm verify:integrations` configures the local
+TrueForge provider and verifies a small harness-mediated agent response using
+`openai/gpt-oss-20b`.
+
+With TrueForge running, verify the complete path:
+
+```bash
+pnpm verify:integrations
+```
+
+It configures the local TrueForge custom provider, creates or refreshes the
+minimal `shutterframe-model-check` agent, creates a session, and verifies the
+exact `SHUTTERFRAME_MODEL_OK` response. The script never prints credentials.
 
 ## Configuring Neon MCP
 
@@ -114,7 +126,7 @@ the end-to-end suite: `pnpm exec playwright install chromium`.
 ## Environment variables
 
 See `.env.example`. Only server-side names are used: `TRUEFORGE_BASE_URL`,
-`OPENAI_API_KEY`, `NEON_API_KEY`, `NEON_PROJECT_ID`, `GITHUB_TOKEN`,
+`GROQ_API_KEY`, `NEON_API_KEY`, `NEON_PROJECT_ID`, `GITHUB_TOKEN`,
 `GITHUB_OWNER`, `GITHUB_REPO`, and `DAYTONA_API_KEY`. None use `NEXT_PUBLIC_`.
 
 ## Development workflow

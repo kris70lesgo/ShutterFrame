@@ -1,8 +1,19 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 const version = process.versions.node;
 const nodeSupported = Number(version.split(".")[0]) >= 22;
-const env = process.env;
+const localEnv = existsSync(".env.local")
+  ? Object.fromEntries(
+      readFileSync(".env.local", "utf8")
+        .split(/\r?\n/)
+        .filter((line) => line && !line.startsWith("#"))
+        .map((line) => {
+          const separator = line.indexOf("=");
+          return [line.slice(0, separator), line.slice(separator + 1)];
+        }),
+    )
+  : {};
+const env = { ...localEnv, ...process.env };
 
 function mark(value, yes, no) {
   return `${value ? "✓" : "○"} ${value ? yes : no}`;
@@ -25,7 +36,7 @@ async function main() {
   }
 
   console.log(mark(trueforgeReachable, "TrueForge reachable", "TrueForge not reachable"));
-  console.log(mark(Boolean(env.OPENAI_API_KEY), "OpenAI key configured", "OpenAI key not configured"));
+  console.log(mark(Boolean(env.GROQ_API_KEY), "Groq key configured", "Groq key not configured"));
   console.log(mark(Boolean(env.NEON_API_KEY && env.NEON_PROJECT_ID), "Neon credentials configured", "Neon credentials not configured"));
   console.log(mark(Boolean(env.DAYTONA_API_KEY), "Daytona configured", "Daytona not configured"));
   console.log(mark(Boolean(env.GITHUB_TOKEN && env.GITHUB_OWNER && env.GITHUB_REPO), "GitHub credentials configured", "GitHub credentials not configured"));

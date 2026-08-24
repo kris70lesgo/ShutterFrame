@@ -10,7 +10,7 @@ export default async function Home() {
     neonConfigured: serverEnv.neonConfigured,
     daytonaConfigured: serverEnv.daytonaConfigured,
     githubConfigured: serverEnv.githubConfigured,
-    modelConfigured: serverEnv.openAiConfigured,
+    modelConfigured: serverEnv.groqConfigured,
   };
 
   return (
