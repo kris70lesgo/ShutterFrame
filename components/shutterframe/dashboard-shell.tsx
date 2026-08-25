@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Bell, ChevronDown, CircleUserRound, LayoutDashboard, PanelLeftClose, Route, Settings2, ShieldCheck, SlidersHorizontal, Wrench } from "lucide-react";
+import { Bell, ChevronDown, LayoutDashboard, PanelLeftClose, Route, Settings2, ShieldCheck, SlidersHorizontal, Wrench } from "lucide-react";
 
 const navigation = [
   { label: "Dashboard", icon: LayoutDashboard, active: true },
