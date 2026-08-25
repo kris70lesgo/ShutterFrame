@@ -11,5 +11,5 @@ const steps: readonly ProgressStep[] = [
 ];
 
 export function RehearsalProgress() {
-  return <section className="dashboard-card overflow-hidden" aria-labelledby="progress-heading"><div className="border-b border-[#e7edf3] px-5 py-4"><h2 id="progress-heading" className="text-sm font-bold tracking-[-0.015em]">Rehearsal progress</h2></div><div className="overflow-x-auto px-5 py-7"><ProgressIndicator steps={steps} /></div></section>;
+  return <section className="bg-white py-16" aria-label="Rehearsal progress"><ProgressIndicator steps={steps} /></section>;
 }
