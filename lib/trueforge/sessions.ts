@@ -1,11 +1,9 @@
 import "server-only";
 
-import type { TrueForgeSessionRequest } from "@/lib/trueforge/types";
+import { getTrueForgeClient } from "@/lib/trueforge/client";
+import { startRehearsalSessionWithClient } from "@/lib/trueforge/session-client";
+import type { TrueForgeSessionRequest, TrueForgeSessionResult } from "@/lib/trueforge/types";
 
-/**
- * Reserved application-level entry point for a future rehearsal session.
- * TrueForge will own the session, tool calls, sandbox, and approval checkpoint.
- */
-export async function startRehearsalSession(_request: TrueForgeSessionRequest) {
-  throw new Error("Rehearsal sessions are not implemented during foundation setup.");
+export async function startRehearsalSession(request: TrueForgeSessionRequest): Promise<TrueForgeSessionResult> {
+  return startRehearsalSessionWithClient(getTrueForgeClient(60), request);
 }

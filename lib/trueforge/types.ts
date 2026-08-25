@@ -5,7 +5,19 @@ export type TrueForgeHealth = {
   capabilities?: unknown;
 };
 
+export type RehearsalSessionContext = {
+  repoOwner: string;
+  repoName: string;
+  prNumber: number;
+  commitSha: string;
+  migrationPath: string | null;
+};
+
 export type TrueForgeSessionRequest = {
-  migrationId: string;
-  prompt: string;
+  rehearsal: RehearsalSessionContext;
+};
+
+export type TrueForgeSessionResult = {
+  sessionId: string;
+  response: string;
 };

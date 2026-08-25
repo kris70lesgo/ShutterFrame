@@ -55,7 +55,7 @@ pnpm run doctor
 pnpm trueforge
 ```
 
-This runs the official local TrueForge process at `http://127.0.0.1:8790` using
+This runs the official local TrueForge process at `http://localhost:8790` using
 its normal local SQLite storage. In a second terminal, run `pnpm run doctor` or
 open the app; both surface whether it is reachable.
 
@@ -105,6 +105,24 @@ random token for every environment and never expose it to browser code.
 Use `GITHUB_INTAKE_PR_NUMBER` (or pass a PR number to
 `pnpm verify:github-intake -- <number>`) to select the pull request verified by
 the cleanup-safe intake check.
+
+## TrueForge rehearsal sessions
+
+Apply `migrations/002_create_runs.sql` after the rehearsal migration. The
+server-only rehearsal-session service loads the saved rehearsal, creates a
+`starting` run, creates a TrueForge session using the existing Groq model
+provider, stores the resulting session ID, and marks the run `ready`. The only
+context sent to the session is repository owner/name, PR number, commit SHA,
+and migration path. It does not call Neon MCP, Daytona, or execute a migration.
+
+With local TrueForge running, verify the end-to-end session and cleanup flow:
+
+```bash
+pnpm verify:trueforge-session
+```
+
+The command first validates the existing TrueForge-managed Groq provider, then
+creates and deletes temporary rehearsal/run records. It never prints secrets.
 
 ## Configuring Daytona
 
