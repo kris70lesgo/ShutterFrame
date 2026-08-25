@@ -1,23 +1,23 @@
+"use client";
+
 import type { ReactNode } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Bell, ChevronDown, LayoutDashboard, PanelLeftClose, Route, Settings2, ShieldCheck, SlidersHorizontal, Wrench } from "lucide-react";
 
 const navigation = [
-  { label: "Dashboard", icon: LayoutDashboard, active: true },
-  { label: "Rehearsals", icon: Route },
-  { label: "Runs", icon: SlidersHorizontal },
-  { label: "Approvals", icon: ShieldCheck, count: 3 },
-  { label: "Integrations", icon: Wrench },
-  { label: "Settings", icon: Settings2 },
+  { label: "Dashboard", href: "/", icon: LayoutDashboard }, { label: "Rehearsals", href: "/rehearsals", icon: Route }, { label: "Runs", href: "/runs", icon: SlidersHorizontal }, { label: "Approvals", href: "/approvals", icon: ShieldCheck, count: 3 }, { label: "Integrations", href: "/integrations", icon: Wrench }, { label: "Settings", href: "/settings", icon: Settings2 },
 ];
 
 export function DashboardShell({ children, systemsOperational }: { children: ReactNode; systemsOperational: boolean }) {
+  const pathname = usePathname();
   return (
     <div className="min-h-screen bg-[#f7f9fb] text-[#142033]">
       <aside className="dashboard-sidebar fixed inset-y-0 left-0 z-20 hidden w-64 flex-col border-r border-[#e2e8f0] bg-white px-4 py-7 lg:flex">
-        <a href="#dashboard" className="flex items-center gap-3 px-2 text-lg font-bold tracking-[-0.04em] text-[#101828]">
+          <Link href="/" className="flex items-center gap-3 px-2 text-lg font-bold tracking-[-0.04em] text-[#101828]">
           <span className="brand-mark grid size-9 place-items-center rounded-xl bg-[#edf5ff] text-[#255aa6]">⌁</span>
           ShutterFrame
-        </a>
+          </Link>
 
         <button className="mt-8 flex items-center gap-3 rounded-xl border border-[#e4eaf1] px-3 py-3 text-left transition hover:border-[#c8d5e5]" type="button">
           <span className="grid size-8 place-items-center rounded-lg bg-[#eaf2f8] text-sm font-bold text-[#286078]">A</span>
@@ -26,12 +26,12 @@ export function DashboardShell({ children, systemsOperational }: { children: Rea
         </button>
 
         <nav className="mt-5 space-y-1" aria-label="Main navigation">
-          {navigation.map(({ label, icon: Icon, active, count }) => (
-            <a key={label} href={label === "Dashboard" ? "#dashboard" : `#${label.toLowerCase()}`} className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${active ? "bg-[#e8f2fa] text-[#286078]" : "text-[#4e5b70] hover:bg-[#f4f7fa]"}`}>
+          {navigation.map(({ label, href, icon: Icon, count }) => (
+            <Link key={label} href={href} className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${pathname === href ? "bg-[#e8f2fa] text-[#286078]" : "text-[#4e5b70] hover:bg-[#f4f7fa]"}`}>
               <Icon size={18} strokeWidth={1.7} />
               <span className="flex-1">{label}</span>
               {count ? <span className="grid size-5 place-items-center rounded-full bg-[#d9ecf6] text-xs font-bold text-[#286078]">{count}</span> : null}
-            </a>
+            </Link>
           ))}
         </nav>
 
@@ -44,7 +44,7 @@ export function DashboardShell({ children, systemsOperational }: { children: Rea
 
       <div className="lg:pl-64">
         <header className="sticky top-0 z-10 flex min-h-[72px] items-center justify-between gap-4 border-b border-[#e2e8f0] bg-white/95 px-5 backdrop-blur lg:px-8">
-          <a href="#dashboard" className="flex items-center gap-2 text-base font-bold tracking-[-0.04em] lg:hidden"><span className="brand-mark grid size-8 place-items-center rounded-lg bg-[#edf5ff] text-[#255aa6]">⌁</span> ShutterFrame</a>
+          <Link href="/" className="flex items-center gap-2 text-base font-bold tracking-[-0.04em] lg:hidden"><span className="brand-mark grid size-8 place-items-center rounded-lg bg-[#edf5ff] text-[#255aa6]">⌁</span> ShutterFrame</Link>
           <label className="search-field hidden max-w-[405px] flex-1 items-center gap-3 rounded-lg border border-[#d8e1eb] bg-white px-3 py-2.5 text-sm text-[#8994a5] md:flex">
             <span aria-hidden="true">⌕</span><input aria-label="Search runs, rehearsals, or commands" className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-[#8994a5]" placeholder="Search runs, rehearsals, or commands…" /> <kbd>⌘ K</kbd>
           </label>

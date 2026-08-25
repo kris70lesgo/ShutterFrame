@@ -6,3 +6,10 @@ test("shows the operations dashboard", async ({ page }) => {
   await expect(page.getByRole("progressbar", { name: "Rehearsal progress" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Recent runs" })).toBeVisible();
 });
+
+test("navigates to workspace pages", async ({ page }) => {
+  for (const [path, heading] of [["/rehearsals", "Rehearsals"], ["/runs", "Runs"], ["/approvals", "Approvals"], ["/integrations", "Integrations"], ["/settings", "Settings"]] as const) {
+    await page.goto(path);
+    await expect(page.getByRole("heading", { name: heading, exact: true })).toBeVisible();
+  }
+});
