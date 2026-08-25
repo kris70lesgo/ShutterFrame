@@ -12,10 +12,11 @@ if (existsSync(envFile)) for (const line of readFileSync(envFile, "utf8").split(
 async function verify() {
 const owner = process.env.GITHUB_OWNER;
 const repo = process.env.GITHUB_REPO;
-const prNumber = 4;
+const suppliedPrNumber = process.argv[2] ?? process.env.GITHUB_INTAKE_PR_NUMBER;
+const prNumber = Number(suppliedPrNumber);
 let rehearsalId: string | undefined;
 try {
-  if (!owner || !repo || !process.env.DATABASE_URL) throw new Error("Verification is not configured.");
+  if (!owner || !repo || !process.env.DATABASE_URL || !Number.isSafeInteger(prNumber) || prNumber < 1) throw new Error("Verification is not configured.");
   const sql = neon(process.env.DATABASE_URL);
   const intake = await fetchPullRequestIntake({ owner, repo, prNumber });
   console.log("GITHUB_PR_FETCH: success");
