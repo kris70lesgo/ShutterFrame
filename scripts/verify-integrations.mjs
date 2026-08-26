@@ -67,36 +67,39 @@ if (existingAgent) {
   await client.agents.create({ name: "shutterframe-model-check", manifest: agentManifest });
 }
 
-const session = await client.sessions.create({ agent: { name: "shutterframe-model-check" } });
-let response = "";
-const eventTypes = [];
-let modelMessage = null;
-let streamedContent = "";
-const events = await client.sessions.createTurnStream(session.data.id, {
-  previousTurnId: "none",
-  input: [{ type: "user.message", content: `Reply with exactly:\n${EXPECTED_RESPONSE}` }],
-});
+let sessionId;
+let failure;
+try {
+  const session = await client.sessions.create({ agent: { name: "shutterframe-model-check" } });
+  sessionId = session.data.id;
+  let response = "";
+  const eventTypes = [];
+  let modelMessage = null;
+  let streamedContent = "";
+  const events = await client.sessions.createTurnStream(session.data.id, {
+    previousTurnId: "none",
+    input: [{ type: "user.message", content: `Reply with exactly:\n${EXPECTED_RESPONSE}` }],
+  });
 
-for await (const event of events) {
-  eventTypes.push(event.type);
-  if (event.type === "model.message") modelMessage = event;
-  if (event.type === "model.message.delta" && modelMessage) {
-    mergeEventDelta(modelMessage, event);
+  for await (const event of events) {
+    eventTypes.push(event.type);
+    if (event.type === "model.message") modelMessage = event;
+    if (event.type === "model.message.delta" && modelMessage) mergeEventDelta(modelMessage, event);
+    if (event.type === "model.message.delta") streamedContent += event.content ?? "";
+    if (event.type === "turn.done" && event.state.status === "done") response = contentToText(event.state.output?.content).trim();
   }
-  if (event.type === "model.message.delta") streamedContent += event.content ?? "";
-  if (event.type === "turn.done" && event.state.status === "done") {
-    response = contentToText(event.state.output?.content).trim();
-  }
+
+  response = contentToText(modelMessage?.content).trim() || streamedContent.trim() || response;
+  if (response !== EXPECTED_RESPONSE) throw new Error(`TrueForge did not return the expected Groq response: ${JSON.stringify(response)}; events: ${eventTypes.join(", ")}`);
+
+  console.log("Groq credentials detected: yes");
+  console.log("Groq provider configured in TrueForge: yes");
+  console.log(`Model selected: ${MODEL_ID}`);
+  console.log("TrueForge session created: yes");
+  console.log(`Groq response received through TrueForge: ${response}`);
+} catch (error) {
+  failure = error;
+  throw error;
+} finally {
+  if (sessionId) try { await client.sessions.delete(sessionId); } catch (cleanupError) { if (!failure) throw cleanupError; }
 }
-
-response = contentToText(modelMessage?.content).trim() || streamedContent.trim() || response;
-
-if (response !== EXPECTED_RESPONSE) {
-  throw new Error(`TrueForge did not return the expected Groq response: ${JSON.stringify(response)}; events: ${eventTypes.join(", ")}`);
-}
-
-console.log("Groq credentials detected: yes");
-console.log("Groq provider configured in TrueForge: yes");
-console.log(`Model selected: ${MODEL_ID}`);
-console.log("TrueForge session created: yes");
-console.log(`Groq response received through TrueForge: ${response}`);

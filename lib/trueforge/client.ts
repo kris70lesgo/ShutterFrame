@@ -7,11 +7,11 @@ import { serverEnv } from "@/lib/env/server";
  * Keep the generated SDK at the server boundary. React components and domain
  * modules never call TrueForge directly.
  */
-export function getTrueForgeClient() {
+export function getTrueForgeClient(timeoutInSeconds = 2) {
   return new TrueForge({
     baseUrl: serverEnv.trueforgeBaseUrl,
     auth: false,
-    timeoutInSeconds: 2,
+    timeoutInSeconds,
     maxRetries: 0,
   });
 }

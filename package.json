@@ -17,6 +17,7 @@
     "doctor": "node scripts/doctor.mjs",
     "verify:database": "node scripts/verify-database.mjs",
     "verify:github-intake": "tsx scripts/verify-github-intake.ts",
+    "verify:trueforge-session": "pnpm verify:integrations && NODE_OPTIONS=--conditions=react-server tsx scripts/verify-trueforge-session.ts",
     "verify:integrations": "node scripts/verify-integrations.mjs",
     "trueforge": "npx @truefoundry/trueforge",
     "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
@@ -30,6 +31,7 @@
     "next": "^15.1.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "server-only": "^0.0.1",
     "tailwind-merge": "^2.6.0"
   },
   "devDependencies": {
