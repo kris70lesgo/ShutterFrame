@@ -1,4 +1,4 @@
-import { TrueForge } from "@truefoundry/trueforge-sdk";
+import { TrueForge, mergeEventDelta } from "@truefoundry/trueforge-sdk";
 import { TRUEFORGE_REHEARSAL_RESPONSE, buildRehearsalContextPrompt } from "@/lib/trueforge/rehearsal-context";
 import type { TrueForgeSessionRequest, TrueForgeSessionResult } from "@/lib/trueforge/types";
 
@@ -21,15 +21,30 @@ export async function startRehearsalSessionWithClient(client: TrueForge, request
 
   const session = await client.sessions.create({ agent: { name: AGENT_NAME } });
   let response = "";
-  const events = await client.sessions.createTurnStream(session.data.id, {
-    previousTurnId: "none",
-    input: [{ type: "user.message", content: buildRehearsalContextPrompt(request.rehearsal) }],
-  });
+  let streamedContent = "";
+  let modelMessage = null;
+  let failure: unknown;
 
-  for await (const event of events) {
-    if (event.type === "turn.done" && event.state.status === "done") response = contentToText(event.state.output?.content).trim();
+  try {
+    const events = await client.sessions.createTurnStream(session.data.id, {
+      previousTurnId: "none",
+      input: [{ type: "user.message", content: buildRehearsalContextPrompt(request.rehearsal) }],
+    });
+
+    for await (const event of events) {
+      if (event.type === "model.message") modelMessage = event;
+      if (event.type === "model.message.delta" && modelMessage) mergeEventDelta(modelMessage, event);
+      if (event.type === "model.message.delta") streamedContent += event.content ?? "";
+      if (event.type === "turn.done" && event.state.status === "done") response = contentToText(event.state.output?.content).trim();
+    }
+
+    response = contentToText(modelMessage?.content).trim() || streamedContent.trim() || response;
+    if (response !== TRUEFORGE_REHEARSAL_RESPONSE) throw new Error("TrueForge did not return the expected rehearsal response.");
+    return { sessionId: session.data.id, response };
+  } catch (error) {
+    failure = error;
+    throw error;
+  } finally {
+    if (failure) try { await client.sessions.delete(session.data.id); } catch { /* Preserve the original turn error. */ }
   }
-
-  if (response !== TRUEFORGE_REHEARSAL_RESPONSE) throw new Error("TrueForge did not return the expected rehearsal response.");
-  return { sessionId: session.data.id, response };
 }

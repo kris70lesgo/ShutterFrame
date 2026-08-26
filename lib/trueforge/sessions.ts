@@ -7,3 +7,7 @@ import type { TrueForgeSessionRequest, TrueForgeSessionResult } from "@/lib/true
 export async function startRehearsalSession(request: TrueForgeSessionRequest): Promise<TrueForgeSessionResult> {
   return startRehearsalSessionWithClient(getTrueForgeClient(60), request);
 }
+
+export async function deleteRehearsalSession(sessionId: string) {
+  await getTrueForgeClient(60).sessions.delete(sessionId);
+}

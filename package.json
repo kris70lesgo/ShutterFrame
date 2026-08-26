@@ -17,7 +17,7 @@
     "doctor": "node scripts/doctor.mjs",
     "verify:database": "node scripts/verify-database.mjs",
     "verify:github-intake": "tsx scripts/verify-github-intake.ts",
-    "verify:trueforge-session": "pnpm verify:integrations && tsx scripts/verify-trueforge-session.ts",
+    "verify:trueforge-session": "pnpm verify:integrations && NODE_OPTIONS=--conditions=react-server tsx scripts/verify-trueforge-session.ts",
     "verify:integrations": "node scripts/verify-integrations.mjs",
     "trueforge": "npx @truefoundry/trueforge",
     "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
