@@ -4,6 +4,8 @@ import { getTrueForgeClient } from "@/lib/trueforge/client";
 import { NEON_MCP_SERVER_NAME } from "@/lib/database/neon";
 import { serverEnv } from "@/lib/env/server";
 import { redactUnknown } from "@/lib/rehearsal-engine/redaction";
+import { createEvidence } from "@/lib/database/evidence";
+import { deepSeekUsageFromMetrics, estimateDeepSeekV4FlashOffPeakUsd } from "@/lib/rehearsal-engine/deepseek-cost";
 
 export const SHUTTERFRAME_REHEARSAL_AGENT_NAME = "shutterframe-rehearsal";
 
@@ -50,6 +52,8 @@ export async function runRehearsalEngineTurn(input: { sessionId: string; repoOwn
       const done = events.find((item) => item.turnId === turn.id && item.event.type === "turn.done");
       if (done?.event.type === "turn.done") {
         if (done.event.state.status !== "done") throw new Error(done.event.state.status === "error" ? done.event.state.message : "TrueForge turn was cancelled.");
+        const usage = deepSeekUsageFromMetrics(done.event.state.metrics);
+        if (usage) await createEvidence({ runId: input.runId, type: "model_usage", name: "deepseek_v4_flash", status: "pass", data: { ...usage, estimatedUsd: estimateDeepSeekV4FlashOffPeakUsd(usage) } });
         return turn.id;
       }
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -70,13 +74,17 @@ export async function runRehearsalEngineTurn(input: { sessionId: string; repoOwn
     phaseOneEvents = (await client.sessions.listEvents(input.sessionId)).data.filter((item) => rehearsalTurnIds.has(item.turnId));
   }
   if (!hasVerifiedFingerprint()) throw new Error("Artifact fingerprint mismatch; migration was not executed.");
-  await runPhase([
-    "Phase 2 only. Using the branch ID and exact migration SQL obtained in phase 1, you MUST call Neon run_sql to apply the migration against that branch. Then you MUST call Neon run_sql for SELECT 1 AS smoke_test. Never execute database commands in the sandbox. Do not delete the branch yet.",
-    "End with a compact factual summary of the two tool results.",
-  ].join("\n"), "auto");
-  await runPhase([
-    "Phase 3 only. On the same Neon branch, run deterministic validation: get_database_tables, describe affected table schemas when identifiable, run_sql querying pg_constraint for invalid/unvalidated foreign-key constraints, and a small row-count observation where identifiable. Then you MUST call delete_branch for the disposable branch. Return compact JSON stating every check truthfully.",
-  ].join("\n"), "auto");
+  try {
+    await runPhase([
+      "Phase 2 only. Using the branch ID and exact migration SQL obtained in phase 1, you MUST call Neon run_sql to apply the migration against that branch. Then you MUST call Neon run_sql for SELECT 1 AS smoke_test. Never execute database commands in the sandbox. Do not delete the branch yet.",
+      "End with a compact factual summary of the two tool results.",
+    ].join("\n"), "auto");
+    await runPhase([
+      "Phase 3 only. On the same Neon branch, run deterministic validation: get_database_tables, describe affected table schemas when identifiable, run_sql querying pg_constraint for invalid/unvalidated foreign-key constraints, and a small row-count observation where identifiable. Then you MUST call delete_branch for the disposable branch. Return compact JSON stating every check truthfully.",
+    ].join("\n"), "auto");
+  } finally {
+    try { await runPhase("Cleanup only. If the disposable Neon branch from this run still exists, call delete_branch now. Do not call any other tool.", "auto"); } catch { /* never replace the root failure */ }
+  }
   const persistedEvents = (await client.sessions.listEvents(input.sessionId)).data.filter((item) => rehearsalTurnIds.has(item.turnId));
   const persistedToolNames = new Map<string, string>();
   const persisted: EngineEvent[] = [];

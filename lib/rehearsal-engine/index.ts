@@ -7,7 +7,7 @@ import { fetchMigrationArtifact, verifyPullRequestHead } from "@/lib/github/arti
 import { createStartingRun, getLatestRunForRehearsal, markRunReady, markRunStatus, replaceRunTrueForgeSession, setRunInfrastructure, type Run } from "@/lib/database/runs";
 import { redactUnknown } from "@/lib/rehearsal-engine/redaction";
 import { classifyRehearsalOutcome, type RehearsalOutcome } from "@/lib/rehearsal-engine/classification";
-import { DEEPSEEK_SPEND_LIMIT_USD, deepSeekUsageFromMetrics, estimateDeepSeekV4FlashOffPeakUsd } from "@/lib/rehearsal-engine/deepseek-cost";
+import { DEEPSEEK_SPEND_LIMIT_USD } from "@/lib/rehearsal-engine/deepseek-cost";
 import { createShutterFrameRehearsalSession, ensureShutterFrameRehearsalAgent, runRehearsalEngineTurn, sessionUsesShutterFrameRehearsalAgent, type EngineEvent } from "@/lib/trueforge/rehearsal-engine-agent";
 
 const activeStatuses = new Set(["starting", "branching", "sandbox_starting", "migration_running", "validating"]);
@@ -71,8 +71,6 @@ export async function runRehearsalEngine(rehearsalId: string): Promise<{ runId: 
     if (!run.trueforgeSessionId) throw new Error("TrueForge session was not persisted for the run.");
     await markRunStatus(run.id, "branching");
     events = await runRehearsalEngineTurn({ sessionId: run.trueforgeSessionId, repoOwner: rehearsal.repoOwner, repoName: rehearsal.repoName, commitSha: rehearsal.commitSha, migrationPath: rehearsal.migrationPath, migrationSql: artifact.content, fingerprint: artifact.sha256, runId: run.id });
-    const usage = events.map((event) => event.type === "turn.done" ? deepSeekUsageFromMetrics((event.payload as { metrics?: unknown }).metrics) : null).filter((value): value is NonNullable<typeof value> => Boolean(value)).reduce((total, value) => ({ inputTokens: total.inputTokens + value.inputTokens, outputTokens: total.outputTokens + value.outputTokens, cacheReadTokens: total.cacheReadTokens + value.cacheReadTokens }), { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0 });
-    if (usage.inputTokens || usage.outputTokens) await createEvidence({ runId: run.id, type: "model_usage", name: "deepseek_v4_flash", status: "pass", data: { inputTokens: usage.inputTokens, outputTokens: usage.outputTokens, cacheReadTokens: usage.cacheReadTokens, estimatedUsd: estimateDeepSeekV4FlashOffPeakUsd(usage) } });
     const resources = { neonBranchId: branchId(events) ?? undefined, daytonaSandboxId: sandboxId(events) ?? undefined };
     await setRunInfrastructure(run.id, resources);
     if (resources.neonBranchId) await log(run.id, "info", "Neon branch created", { branchId: resources.neonBranchId });
