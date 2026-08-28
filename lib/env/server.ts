@@ -9,9 +9,14 @@ export const serverEnv = {
     process.env.TRUEFORGE_BASE_URL ?? "http://localhost:8790",
   ),
   groqConfigured: Boolean(process.env.GROQ_API_KEY),
+  geminiConfigured: Boolean(process.env.GEMINI_API_KEY),
+  deepseekConfigured: Boolean(process.env.DEEPSEEK_API_KEY),
+  neonProjectId: process.env.NEON_PROJECT_ID,
   neonConfigured: Boolean(process.env.NEON_API_KEY && process.env.NEON_PROJECT_ID),
   githubConfigured: Boolean(
     process.env.GITHUB_TOKEN && process.env.GITHUB_OWNER && process.env.GITHUB_REPO,
   ),
   daytonaConfigured: Boolean(process.env.DAYTONA_API_KEY),
+  daytonaApiKey: process.env.DAYTONA_API_KEY,
+  daytonaApiUrl: trimTrailingSlash(process.env.DAYTONA_API_URL ?? "https://app.daytona.io/api"),
 };
