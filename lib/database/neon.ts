@@ -1,13 +1,14 @@
-export type NeonBranchRequest = {
-  parentBranchId: string;
-  name: string;
-};
-
 /**
- * Future Neon MCP adapter. TrueForge, rather than the Next.js process, will
- * execute branch creation, SQL, and deletion with scoped development access.
+ * The application deliberately has no direct Neon branch or SQL client here.
+ * Rehearsal database operations are exposed only as tools from this configured
+ * TrueForge MCP server, so preview credentials never enter application logs,
+ * prompts, sandbox environment maps, or persisted evidence.
  */
-export interface NeonBranchService {
-  createTemporaryBranch(request: NeonBranchRequest): Promise<{ branchId: string }>;
-  destroyTemporaryBranch(branchId: string): Promise<void>;
-}
+export const NEON_MCP_SERVER_NAME = "neon";
+
+export const requiredNeonMcpTools = [
+  "create_branch",
+  "run_sql",
+  "describe_table_schema",
+  "delete_branch",
+] as const;

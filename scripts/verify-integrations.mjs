@@ -46,11 +46,18 @@ await client.settings.modelProviders.createOrUpdate({
     name: MODEL_PROVIDER,
     baseUrl: "https://api.groq.com/openai/v1",
     auth: { apiKey: groqApiKey },
-    models: [{
-      modelId: MODEL_ID,
-      name: MODEL_NAME,
-      properties: { contextLength: 131072, maxOutputTokens: 8192, reasoningEfforts: ["low", "medium", "high"] },
-    }],
+    models: [
+      {
+        modelId: MODEL_ID,
+        name: MODEL_NAME,
+        properties: { contextLength: 131072, maxOutputTokens: 8192, reasoningEfforts: ["low", "medium", "high"] },
+      },
+      {
+        modelId: "qwen/qwen3.6-27b",
+        name: "qwen3.6-27b",
+        properties: { contextLength: 131072, maxOutputTokens: 16384, reasoningEfforts: ["none"] },
+      },
+    ],
   },
 });
 
