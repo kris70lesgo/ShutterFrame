@@ -5,6 +5,8 @@ coverage/
 playwright-report/
 test-results/
 *.tsbuildinfo
+.DS_Store
+package-lock.json
 
 # Local configuration and tool state
 .env.local

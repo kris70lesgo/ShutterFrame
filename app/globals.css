@@ -1,5 +1,31 @@
 @import "tailwindcss";
 
+@theme {
+  --color-primary: #ffffff;
+  --color-primary_hover: #f4f7fa;
+  --color-secondary: #405067;
+  --color-secondary_hover: #286078;
+  --color-secondary_alt: #f7f9fb;
+  --color-tertiary: #eef2f6;
+  --color-border-secondary: #e2e8f0;
+  --color-fg-primary: #101828;
+  --color-fg-secondary: #4e5b70;
+  --color-fg-quaternary: #6d7a8e;
+  --color-fg-quaternary_hover: #286078;
+  --color-text-secondary: #4e5b70;
+  --color-text-secondary_hover: #286078;
+  --color-text-primary: #172033;
+  --color-text-tertiary: #738095;
+  --color-fg-white: #ffffff;
+  --color-utility-neutral-50: #f1f5f9;
+  --color-utility-neutral-200: #e2e8f0;
+  --color-utility-neutral-500: #64748b;
+  --color-utility-neutral-700: #475569;
+  --color-brand-solid: #236a7c;
+  --color-brand-solid_hover: #195b6b;
+  --shadow-xs-skeuomorphic: 0 1px 2px rgba(28, 44, 64, 0.12);
+}
+
 :root { color-scheme: light; }
 * { box-sizing: border-box; }
 body {
@@ -14,3 +40,29 @@ button, input { font: inherit; }
 .dashboard-kicker { font-size: 10px; font-weight: 700; letter-spacing: .035em; text-transform: uppercase; color: #788599; }
 .brand-mark { font-family: ui-monospace, "SFMono-Regular", monospace; font-size: 24px; line-height: 1; box-shadow: inset 0 0 0 1px rgba(37, 90, 166, .12); }
 .search-field kbd { border-radius: 4px; background: #f1f4f7; padding: 2px 5px; font-family: ui-monospace, "SFMono-Regular", monospace; font-size: 10px; color: #647187; }
+
+/* Custom dark scrollbar for Settings modal */
+.settings-scroll-area,
+.settings-nav-scroll {
+  color-scheme: dark;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+.settings-scroll-area::-webkit-scrollbar,
+.settings-nav-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.settings-scroll-area::-webkit-scrollbar-track,
+.settings-nav-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.settings-scroll-area::-webkit-scrollbar-thumb,
+.settings-nav-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 9999px;
+}
+.settings-scroll-area::-webkit-scrollbar-thumb:hover,
+.settings-nav-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.35);
+}

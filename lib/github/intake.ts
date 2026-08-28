@@ -15,6 +15,15 @@ export class GitHubRequestError extends Error {
   }
 }
 
+function readConfiguredRepository() {
+  const owner = process.env.GITHUB_OWNER;
+  const repo = process.env.GITHUB_REPO;
+  if (!owner || !repo || !/^[A-Za-z0-9_.-]+$/.test(owner) || !/^[A-Za-z0-9_.-]+$/.test(repo)) {
+    throw new Error("GITHUB_OWNER and GITHUB_REPO must be configured.");
+  }
+  return { owner, repo };
+}
+
 export function validatePullRequestIntakeRequest(value: unknown): PullRequestIntakeRequest {
   if (!value || typeof value !== "object") throw new InvalidPullRequestReferenceError();
   const { owner, repo, prNumber } = value as Record<string, unknown>;
@@ -36,7 +45,9 @@ async function github(path: string) {
   const token = process.env.GITHUB_TOKEN;
   if (!token) throw new Error("GITHUB_TOKEN is not configured.");
   try {
-    const response = await fetch(`https://api.github.com${path}`, { headers: { Accept: "application/vnd.github+json", Authorization: `Bearer ${token}`, "X-GitHub-Api-Version": "2022-11-28" }, cache: "no-store" });
+    const url = new URL(path, "https://api.github.com");
+    if (url.origin !== "https://api.github.com" || !url.pathname.startsWith("/repos/")) throw new GitHubRequestError();
+    const response = await fetch(url, { headers: { Accept: "application/vnd.github+json", Authorization: `token ${token}`, "X-GitHub-Api-Version": "2022-11-28" }, cache: "no-store" });
     if (!response.ok) throw new GitHubRequestError();
     return response;
   } catch (error) {
@@ -47,10 +58,18 @@ async function github(path: string) {
 
 export async function fetchPullRequestIntake(request: PullRequestIntakeRequest): Promise<PullRequestIntake> {
   const validRequest = validatePullRequestIntakeRequest(request);
-  const pr = await (await github(`/repos/${validRequest.owner}/${validRequest.repo}/pulls/${validRequest.prNumber}`)).json() as { title: string; user: { login: string }; head: { sha: string }; base: { ref: string } };
+  const configuredRepository = readConfiguredRepository();
+  if (
+    validRequest.owner.toLowerCase() !== configuredRepository.owner.toLowerCase() ||
+    validRequest.repo.toLowerCase() !== configuredRepository.repo.toLowerCase()
+  ) {
+    throw new InvalidPullRequestReferenceError();
+  }
+
+  const pr = await (await github(`/repos/${configuredRepository.owner}/${configuredRepository.repo}/pulls/${validRequest.prNumber}`)).json() as { title: string; user: { login: string }; head: { sha: string }; base: { ref: string } };
   const changedFiles: string[] = [];
   for (let page = 1; ; page += 1) {
-    const files = await (await github(`/repos/${validRequest.owner}/${validRequest.repo}/pulls/${validRequest.prNumber}/files?per_page=100&page=${page}`)).json() as Array<{ filename: string }>;
+    const files = await (await github(`/repos/${configuredRepository.owner}/${configuredRepository.repo}/pulls/${validRequest.prNumber}/files?per_page=100&page=${page}`)).json() as Array<{ filename: string }>;
     changedFiles.push(...files.map(({ filename }) => filename));
     if (files.length < 100) break;
   }
