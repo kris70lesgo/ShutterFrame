@@ -55,7 +55,7 @@ pnpm run doctor
 pnpm trueforge
 ```
 
-This runs the official local TrueForge process at `http://127.0.0.1:8790` using
+This runs the official local TrueForge process at `http://localhost:8790` using
 its normal local SQLite storage. In a second terminal, run `pnpm run doctor` or
 open the app; both surface whether it is reachable.
 
@@ -93,6 +93,37 @@ demo repository, then configure the official GitHub MCP server in TrueForge.
 Set `GITHUB_OWNER` and `GITHUB_REPO` to identify the demo source. TrueForge
 should hold `GITHUB_TOKEN`; it must not be exposed by Next.js or browser code.
 
+## GitHub pull request intake
+
+Apply `migrations/001_create_rehearsals.sql` to the target Neon database before
+using intake. The server-only `POST /api/rehearsals/intake` endpoint accepts an
+owner, repository, and PR number only for the repository configured by
+`GITHUB_OWNER` and `GITHUB_REPO`. It also requires
+`Authorization: Bearer <SHUTTERFRAME_INTAKE_TOKEN>`; generate a different long,
+random token for every environment and never expose it to browser code.
+
+Use `GITHUB_INTAKE_PR_NUMBER` (or pass a PR number to
+`pnpm verify:github-intake -- <number>`) to select the pull request verified by
+the cleanup-safe intake check.
+
+## TrueForge rehearsal sessions
+
+Apply `migrations/002_create_runs.sql` after the rehearsal migration. The
+server-only rehearsal-session service loads the saved rehearsal, creates a
+`starting` run, creates a TrueForge session using the existing Groq model
+provider, stores the resulting session ID, and marks the run `ready`. The only
+context sent to the session is repository owner/name, PR number, commit SHA,
+and migration path. It does not call Neon MCP, Daytona, or execute a migration.
+
+With local TrueForge running, verify the end-to-end session and cleanup flow:
+
+```bash
+pnpm verify:trueforge-session
+```
+
+The command first validates the existing TrueForge-managed Groq provider, then
+creates and deletes temporary rehearsal/run records. It never prints secrets.
+
 ## Configuring Daytona
 
 Create a Daytona API key and configure the Daytona sandbox provider in
@@ -128,8 +159,9 @@ the end-to-end suite: `pnpm exec playwright install chromium`.
 
 See `.env.example`. Only server-side names are used: `TRUEFORGE_BASE_URL`,
 `GROQ_API_KEY`, `NEON_API_KEY`, `NEON_PROJECT_ID`, `GITHUB_TOKEN`,
-`GITHUB_OWNER`, `GITHUB_REPO`, `DAYTONA_API_KEY`, and `DAYTONA_API_URL`. None
-use `NEXT_PUBLIC_`.
+`GITHUB_OWNER`, `GITHUB_REPO`, `SHUTTERFRAME_INTAKE_TOKEN`,
+`GITHUB_INTAKE_PR_NUMBER`, `DAYTONA_API_KEY`, and `DAYTONA_API_URL`. None use
+`NEXT_PUBLIC_`.
 
 ## Development workflow
 

@@ -3,8 +3,10 @@ import "server-only";
 const trimTrailingSlash = (value: string) => value.replace(/\/+$/, "");
 
 export const serverEnv = {
+  databaseUrl: process.env.DATABASE_URL,
+  databaseConfigured: Boolean(process.env.DATABASE_URL),
   trueforgeBaseUrl: trimTrailingSlash(
-    process.env.TRUEFORGE_BASE_URL ?? "http://127.0.0.1:8790",
+    process.env.TRUEFORGE_BASE_URL ?? "http://localhost:8790",
   ),
   groqConfigured: Boolean(process.env.GROQ_API_KEY),
   neonConfigured: Boolean(process.env.NEON_API_KEY && process.env.NEON_PROJECT_ID),
