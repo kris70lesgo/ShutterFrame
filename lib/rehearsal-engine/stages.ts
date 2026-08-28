@@ -5,13 +5,13 @@ export type ProgressState = "completed" | "current" | "pending" | "blocked" | "f
 export type RehearsalStage = { key: string; label: string; state: ProgressState };
 
 const stages = [
-  ["pr", "PR verified", ["github_pr"]],
-  ["artifact", "Artifact fetched", ["migration_artifact", "github_blob"]],
-  ["fingerprint", "Fingerprint verified", ["migration_fingerprint", "daytona_fingerprint"]],
-  ["daytona", "Daytona staged", ["daytona_artifact"]],
-  ["neon", "Neon branch created", ["neon_branch"]],
-  ["migration", "Migration executed", ["migration_execution"]],
-  ["validation", "Validation complete", ["schema_integrity", "foreign_keys", "row_counts", "smoke_query"]],
+  ["pr", "PR verified", ["commit_sha", "github_blob_sha"]],
+  ["artifact", "Artifact fetched", ["migration_path", "github_blob_sha"]],
+  ["fingerprint", "Fingerprint verified", ["migration_fingerprint", "fingerprint", "fingerprintVerification"]],
+  ["daytona", "Daytona staged", ["sandbox", "artifactStage"]],
+  ["neon", "Neon branch created", ["branch"]],
+  ["migration", "Migration executed", ["migration"]],
+  ["validation", "Validation complete", ["schema", "foreignKeys", "rowCounts", "smoke"]],
   ["cleanup", "Cleanup complete", ["cleanup"]],
 ] as const;
 

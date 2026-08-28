@@ -4,8 +4,8 @@ import { mapRehearsalStages } from "@/lib/rehearsal-engine/stages";
 describe("live rehearsal progress", () => {
   it("maps persisted engine evidence to completed stages", () => {
     const stages = mapRehearsalStages("completed", [
-      { id: "1", runId: "run", type: "github_pr", name: "github_pr_verified", status: "success", data: null },
-      { id: "2", runId: "run", type: "migration_execution", name: "migration_execution", status: "success", data: null },
+      { id: "1", runId: "run", type: "commit_sha", name: "commit_sha", status: "success", data: null },
+      { id: "2", runId: "run", type: "migration", name: "migration", status: "success", data: null },
       { id: "3", runId: "run", type: "cleanup", name: "cleanup", status: "success", data: null },
     ]);
     expect(stages.find((stage) => stage.key === "pr")?.state).toBe("completed");
