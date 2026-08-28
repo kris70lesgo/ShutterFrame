@@ -1,6 +1,10 @@
-import { ArrowUpRight, Bot, Database, Github, HardDrive } from "lucide-react";
-import { serverEnv } from "@/lib/env/server";
-import { checkTrueForgeHealth } from "@/lib/trueforge/health";
 import { WorkspaceLayout } from "@/components/shutterframe/workspace-layout";
-import { PageHeader, StatePill, Surface } from "@/components/shutterframe/workspace-ui";
-export default async function IntegrationsPage() { const trueforge = await checkTrueForgeHealth(); const items = [["TrueForge", "Agent runtime and session orchestration", Bot, trueforge.reachable], ["Groq", "Model inference through TrueForge", Bot, serverEnv.groqConfigured], ["Neon", "Preview branches and database rehearsal", Database, serverEnv.neonConfigured], ["Daytona", "Ephemeral sandbox execution", HardDrive, serverEnv.daytonaConfigured], ["GitHub", "Pull request and source context", Github, serverEnv.githubConfigured]] as const; return <WorkspaceLayout><div className="space-y-7"><PageHeader eyebrow="Connected services" title="Integrations" description="The services ShutterFrame uses to rehearse, evaluate, and safely promote migrations." /><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{items.map(([name, description, Icon, ready]) => <Surface key={name} className="group p-5 transition hover:-translate-y-0.5 hover:border-[#b9d5e2]"><div className="flex items-start justify-between"><span className="grid size-10 place-items-center rounded-xl bg-[#edf5fa] text-[#286078]"><Icon size={20} /></span><StatePill state={ready ? "Ready" : "Pending"} /></div><h2 className="mt-7 font-bold text-[#27364b]">{name}</h2><p className="mt-2 min-h-10 text-sm leading-5 text-[#748196]">{description}</p><a href={`#${name.toLowerCase()}`} className="mt-5 inline-flex items-center gap-1 text-xs font-bold text-[#286078]">View configuration <ArrowUpRight size={14} /></a></Surface>)}</div></div></WorkspaceLayout>; }
+import { IntegrationsGrid } from "@/components/shutterframe/integrations-grid";
+
+export default function IntegrationsPage() {
+  return (
+    <WorkspaceLayout>
+      <IntegrationsGrid />
+    </WorkspaceLayout>
+  );
+}

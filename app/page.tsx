@@ -11,7 +11,7 @@ export default async function Home() {
     <div className="space-y-3.5">
       <ActiveRehearsal />
       <div className="grid gap-3.5 xl:grid-cols-[minmax(0,1fr)_315px]">
-        <div className="space-y-3.5"><RehearsalProgress /><div className="grid gap-3.5 lg:grid-cols-2"><ValidationChecks /><EvidenceLog /></div></div>
+        <div className="space-y-3.5"><RehearsalProgress /><div className="grid items-start gap-3.5 xl:grid-cols-[minmax(270px,.9fr)_minmax(420px,1.1fr)]"><ValidationChecks /><EvidenceLog /></div></div>
         <ApprovalPanel />
       </div>
       <RecentRuns />

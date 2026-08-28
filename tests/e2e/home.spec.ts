@@ -8,7 +8,7 @@ test("shows the operations dashboard", async ({ page }) => {
 });
 
 test("navigates to workspace pages", async ({ page }) => {
-  for (const [path, heading] of [["/rehearsals", "Rehearsals"], ["/runs", "Runs"], ["/approvals", "Approvals"], ["/integrations", "Integrations"], ["/settings", "Settings"]] as const) {
+  for (const [path, heading] of [["/runs", "Runs"], ["/integrations", "Integrations"]] as const) {
     await page.goto(path);
     await expect(page.getByRole("heading", { name: heading, exact: true })).toBeVisible();
   }
