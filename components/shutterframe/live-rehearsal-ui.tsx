@@ -7,6 +7,10 @@ import { useEffect, useState } from "react";
 import type { RehearsalDetail, RehearsalListItem } from "@/lib/database/rehearsal-views";
 import type { ProgressState } from "@/lib/rehearsal-engine/stages";
 import { canReviewRun } from "@/lib/approvals/policy";
+import { RehearsalProgress } from "@/components/shutterframe/rehearsal-progress";
+import { ValidationChecks } from "@/components/shutterframe/validation-checks";
+import { EvidenceLog } from "@/components/shutterframe/evidence-log";
+import { StartRehearsalForm } from "@/components/shutterframe/start-rehearsal-form";
 
 const statusStyle: Record<string, string> = {
   completed: "bg-emerald-50 text-emerald-700 ring-emerald-200", approved: "bg-emerald-50 text-emerald-700 ring-emerald-200",
@@ -22,7 +26,7 @@ export function StatusPill({ status }: { status: string | null }) {
 function formatDate(value: string | null) { return value ? new Intl.DateTimeFormat("en", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(value)) : "—"; }
 function shortSha(value: string) { return value.slice(0, 8); }
 
-export function DashboardOverview({ items }: { items: RehearsalListItem[] }) {
+export function DashboardOverview({ items, featured }: { items: RehearsalListItem[]; featured?: RehearsalDetail }) {
   const active = items.filter((item) => item.runStatus && !["completed", "blocked", "failed"].includes(item.runStatus)).length;
   const completed = items.filter((item) => item.runStatus === "completed").length;
   const blocked = items.filter((item) => item.runStatus === "blocked").length;
@@ -32,6 +36,7 @@ export function DashboardOverview({ items }: { items: RehearsalListItem[] }) {
       <div className="mt-4 flex flex-col justify-between gap-5 md:flex-row md:items-end"><div><h2 className="max-w-2xl text-3xl font-semibold tracking-[-0.04em] text-[#172033]">Every migration gets a rehearsal before it earns production.</h2><p className="mt-3 max-w-xl text-sm leading-6 text-[#64748b]">Live evidence from the exact pull-request commit, reviewed as a single auditable run.</p></div><Link href="/rehearsals" className="inline-flex shrink-0 items-center gap-2 self-start rounded-lg bg-[#1f6071] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#164d5b] md:self-auto">View rehearsals <ChevronRight size={16} /></Link></div>
     </section>
     <section className="grid gap-3 sm:grid-cols-3">{[["Active", active, "Runs currently progressing"], ["Completed", completed, "Ready for a human decision"], ["Blocked", blocked, "Needs migration attention"]].map(([label, count, description]) => <div key={String(label)} className="rounded-xl border border-[#e1e7ed] bg-white p-5"><p className="text-xs font-semibold uppercase tracking-[.12em] text-[#788599]">{label}</p><p className="mt-3 text-3xl font-semibold tracking-[-.04em] text-[#172033]">{count}</p><p className="mt-1 text-xs text-[#738095]">{description}</p></div>)}</section>
+    {featured ? <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(350px,.8fr)]"><RehearsalProgress stages={featured.stages} /><div className="grid gap-4"><ValidationChecks evidence={featured.evidence} /><EvidenceLog logs={featured.logs} rehearsalId={featured.id} /></div></section> : null}
     <RehearsalTable items={items.slice(0, 8)} title="Recent rehearsals" />
   </div>;
 }
@@ -46,7 +51,8 @@ export function RehearsalDetailView({ rehearsal }: { rehearsal: RehearsalDetail 
   const router = useRouter();
   const active = rehearsal.runStatus && !["completed", "blocked", "failed"].includes(rehearsal.runStatus);
   useEffect(() => { if (!active) return; const timer = window.setInterval(() => router.refresh(), 5000); return () => window.clearInterval(timer); }, [active, router]);
-  return <div className="space-y-5"><section className="rounded-xl border border-[#dfe7ed] bg-white px-6 py-6"><div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-start"><div><Link href="/rehearsals" className="text-xs font-semibold text-[#317083] hover:underline">← All rehearsals</Link><h2 className="mt-3 text-2xl font-semibold tracking-[-.035em] text-[#172033]">{rehearsal.repoOwner}/{rehearsal.repoName} <span className="text-[#748195]">· PR #{rehearsal.prNumber}</span></h2><p className="mt-2 flex items-center gap-2 font-mono text-xs text-[#64748b]"><FileCode2 size={14} />{rehearsal.migrationPath ?? "No migration path"}</p></div><div className="text-left lg:text-right"><StatusPill status={rehearsal.runStatus ?? rehearsal.rehearsalStatus} /><p className="mt-3 font-mono text-xs text-[#66758a]">{shortSha(rehearsal.commitSha)} · {formatDate(rehearsal.runCreatedAt ?? rehearsal.createdAt)}</p></div></div></section>
+  const runActive = rehearsal.runStatus && !["completed", "blocked", "failed"].includes(rehearsal.runStatus);
+  return <div className="space-y-5"><section className="rounded-xl border border-[#dfe7ed] bg-white px-6 py-6"><div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-start"><div><Link href="/rehearsals" className="text-xs font-semibold text-[#317083] hover:underline">← All rehearsals</Link><h2 className="mt-3 text-2xl font-semibold tracking-[-.035em] text-[#172033]">{rehearsal.repoOwner}/{rehearsal.repoName} <span className="text-[#748195]">· PR #{rehearsal.prNumber}</span></h2><p className="mt-2 flex items-center gap-2 font-mono text-xs text-[#64748b]"><FileCode2 size={14} />{rehearsal.migrationPath ?? "No migration path"}</p></div><div className="flex items-center gap-3 text-left lg:text-right"><StartRehearsalForm rehearsalId={rehearsal.id} disabled={Boolean(runActive)} /><div><StatusPill status={rehearsal.runStatus ?? rehearsal.rehearsalStatus} /><p className="mt-3 font-mono text-xs text-[#66758a]">{shortSha(rehearsal.commitSha)} · {formatDate(rehearsal.runCreatedAt ?? rehearsal.createdAt)}</p></div></div></div></section>
     <section className="rounded-xl border border-[#e0e7ed] bg-white p-6"><div className="flex items-center justify-between"><div><p className="text-sm font-semibold text-[#1d2939]">Rehearsal progress</p><p className="mt-1 text-xs text-[#778599]">Derived from persisted engine evidence.</p></div><Clock3 className="size-5 text-[#78909a]" /></div><ol className="mt-7 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">{rehearsal.stages.map((stage) => <li key={stage.key} className="flex items-center gap-3"><span className={`grid size-7 shrink-0 place-items-center rounded-full ${stateDot[stage.state]} ${stage.state === "pending" ? "text-slate-500" : "text-white"}`}>{stage.state === "completed" ? <Check size={14} strokeWidth={3} /> : stage.state === "failed" ? <CircleX size={14} /> : stage.state === "blocked" ? <CircleAlert size={14} /> : <span className="size-1.5 rounded-full bg-current" />}</span><div><p className="text-sm font-medium text-[#354157]">{stage.label}</p><p className="text-[11px] capitalize text-[#7c899b]">{stage.state}</p></div></li>)}</ol></section>
     <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_330px]"><div className="space-y-5"><EvidencePanel evidence={rehearsal.evidence} /><LogPanel logs={rehearsal.logs} /></div><ApprovalCard runId={rehearsal.runId} runStatus={rehearsal.runStatus} approval={rehearsal.approval} /></div>
   </div>;
