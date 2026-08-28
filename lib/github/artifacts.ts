@@ -33,7 +33,11 @@ export async function fetchMigrationArtifact(input: { owner: string; repo: strin
   const path = input.migrationPath.split("/").map(encodeURIComponent).join("/");
   const file = await (await github(`/repos/${input.owner}/${input.repo}/contents/${path}?ref=${encodeURIComponent(input.commitSha)}`)).json() as { type?: string; encoding?: string; content?: string; sha?: string; size?: number };
   if (file.type !== "file" || file.encoding !== "base64" || typeof file.content !== "string") throw new GitHubArtifactError("GitHub response is not a file.");
-  const bytes = Buffer.from(file.content.replace(/\s/g, ""), "base64");
+  const encoded = file.content.replace(/\s/g, "");
+  if (!/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(encoded)) throw new GitHubArtifactError("Migration file encoding is invalid.");
+  const bytes = Buffer.from(encoded, "base64");
   if (bytes.length === 0 || bytes.length > MAX_MIGRATION_BYTES || (typeof file.size === "number" && file.size !== bytes.length)) throw new GitHubArtifactError("Migration file exceeds the permitted size or is invalid.");
-  return { owner: input.owner, repo: input.repo, commitSha: input.commitSha, path: input.migrationPath, content: bytes.toString("utf8"), githubBlobSha: file.sha, byteLength: bytes.length, sha256: createHash("sha256").update(bytes).digest("hex") };
+  let content: string;
+  try { content = new TextDecoder("utf-8", { fatal: true }).decode(bytes); } catch { throw new GitHubArtifactError("Migration file is not valid UTF-8 text."); }
+  return { owner: input.owner, repo: input.repo, commitSha: input.commitSha, path: input.migrationPath, content, githubBlobSha: file.sha, byteLength: bytes.length, sha256: createHash("sha256").update(bytes).digest("hex") };
 }

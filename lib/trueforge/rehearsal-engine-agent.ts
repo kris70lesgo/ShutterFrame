@@ -63,11 +63,13 @@ export async function runRehearsalEngineTurn(input: { sessionId: string; repoOwn
     `Phase 1 only. Call Neon create_branch with branchName shutterframe-${input.runId.slice(0, 8)} and short expiry. Then call sandbox.exec to create artifacts/migration.sql from this base64 data, calculate shasum -a 256 artifacts/migration.sql, and compare it to ${input.fingerprint}: ${encodedSql}. Do not clone a repository or inspect environment/credential files. Do not run SQL, validations, or cleanup in this phase.`,
     "End with a compact factual summary containing the branch ID, migration fingerprint, and SQL content needed by the next phase.",
   ].join("\n"), "none");
-  const phaseOneEvents = (await client.sessions.listEvents(input.sessionId)).data.filter((item) => item.turnId === phaseOneTurnId);
-  const phaseOneHasFingerprint = phaseOneEvents.some((item) => /\b[a-f0-9]{64}\b/i.test(JSON.stringify(item.event)));
-  if (!phaseOneHasFingerprint) {
+  let phaseOneEvents = (await client.sessions.listEvents(input.sessionId)).data.filter((item) => item.turnId === phaseOneTurnId);
+  const hasVerifiedFingerprint = () => phaseOneEvents.some((item) => item.event.type === "tool.response" && String(item.event.content).includes(input.fingerprint));
+  if (!hasVerifiedFingerprint()) {
     await runPhase("Fingerprint remediation only. You MUST call sandbox.exec once and run shasum -a 256 artifacts/migration.sql. Do not call any other tool. Do not explain before calling exec. Return the resulting 64-character SHA-256 only.", "auto");
+    phaseOneEvents = (await client.sessions.listEvents(input.sessionId)).data.filter((item) => rehearsalTurnIds.has(item.turnId));
   }
+  if (!hasVerifiedFingerprint()) throw new Error("Artifact fingerprint mismatch; migration was not executed.");
   await runPhase([
     "Phase 2 only. Using the branch ID and exact migration SQL obtained in phase 1, you MUST call Neon run_sql to apply the migration against that branch. Then you MUST call Neon run_sql for SELECT 1 AS smoke_test. Never execute database commands in the sandbox. Do not delete the branch yet.",
     "End with a compact factual summary of the two tool results.",

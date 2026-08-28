@@ -12,7 +12,8 @@ import { createShutterFrameRehearsalSession, ensureShutterFrameRehearsalAgent, r
 
 const activeStatuses = new Set(["starting", "branching", "sandbox_starting", "migration_running", "validating"]);
 const text = (value: unknown) => typeof value === "string" ? value : JSON.stringify(value);
-const hasTool = (events: EngineEvent[], name: string) => events.some((event) => event.type === "tool.response" && (event.toolName === name || event.toolName?.endsWith(`.${name}`)));
+const toolResponses = (events: EngineEvent[], name: string) => events.filter((event) => event.type === "tool.response" && (event.toolName === name || event.toolName?.endsWith(`.${name}`)));
+const hasTool = (events: EngineEvent[], name: string) => toolResponses(events, name).some((event) => !/(?:\"success\"\s*:\s*false|\"error\"\s*:|\berror\b|\bfailure\b)/i.test(text(event.payload)));
 const findMatch = (events: EngineEvent[], pattern: RegExp) => events.map((event) => text(event.payload).match(pattern)?.[1]).find(Boolean) ?? null;
 const branchId = (events: EngineEvent[]) => findMatch(events, /\b(br-[a-z0-9-]+)\b/i) ?? findMatch(events, /"branchId"\s*:\s*"([^"]+)"/);
 const sandboxId = (events: EngineEvent[]) => findMatch(events, /"sandboxId"\s*:\s*"([^"]+)"/) ?? findMatch(events, /"sandbox_id"\s*:\s*"([^"]+)"/);
@@ -83,9 +84,9 @@ export async function runRehearsalEngine(rehearsalId: string): Promise<{ runId: 
       sandbox: events.some((event) => event.type === "sandbox.created"),
       artifactStage: sandboxOutput.includes("artifacts/migration.sql") && !hasSandboxFailure(sandboxOutput),
       migrationFile: true,
-      fingerprint: Boolean(migrationFingerprint(events)),
+      fingerprint: migrationFingerprint(events) === artifact.sha256,
       fingerprintVerification: sandboxOutput.includes(artifact.sha256) && !hasSandboxFailure(sandboxOutput),
-      migration: hasTool(events, "run_sql"),
+      migration: toolResponses(events, "run_sql").filter((event) => !/(?:\"success\"\s*:\s*false|\"error\"\s*:|\berror\b|\bfailure\b)/i.test(text(event.payload))).length >= 2,
       schema: hasTool(events, "describe_table_schema") || hasTool(events, "get_database_tables"),
       foreignKeys: all.includes("pg_constraint") && hasTool(events, "run_sql"),
       rowCounts: all.includes("count") && hasTool(events, "run_sql"),
@@ -104,8 +105,10 @@ export async function runRehearsalEngine(rehearsalId: string): Promise<{ runId: 
     return { runId: run.id, outcome, events };
   } catch (error) {
     infrastructureFailed = true;
-    await markRunStatus(run.id, "failed");
-    await log(run.id, "error", "Rehearsal infrastructure failure", { error: error instanceof Error ? error.message : "Unknown error" });
+    const message = error instanceof Error ? error.message : "Unknown error";
+    const blocked = /Artifact fingerprint mismatch/.test(message);
+    await markRunStatus(run.id, blocked ? "blocked" : "failed");
+    await log(run.id, blocked ? "warn" : "error", blocked ? "Rehearsal blocked by artifact integrity check" : "Rehearsal infrastructure failure", { error: message });
     throw error;
   }
 }
