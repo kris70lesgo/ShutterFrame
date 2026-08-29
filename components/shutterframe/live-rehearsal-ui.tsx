@@ -32,11 +32,13 @@ export function DashboardOverview({ items, featured }: { items: RehearsalListIte
   const completed = items.filter((item) => item.runStatus === "completed").length;
   const blocked = items.filter((item) => item.runStatus === "blocked").length;
   return <div className="space-y-6">
-    <section className="grid gap-[18px] sm:grid-cols-2 xl:grid-cols-4">
-      <DashboardStatCard title="Active runs" value={String(active)} increaseValue={String(Math.max(active, 1))} description="Running now" variant="green" href="/rehearsals" />
-      <DashboardStatCard title="Completed" value={String(completed)} increaseValue={String(Math.max(completed, 1))} description="Ready for review" variant="light" href="/rehearsals" />
-      <DashboardStatCard title="Blocked" value={String(blocked)} increaseValue={String(Math.max(blocked, 0))} description="Needs attention" variant="light" href="/rehearsals" />
-      <DashboardActionCard />
+    <section className="-mx-1 overflow-x-auto px-1 pb-2">
+      <div className="flex w-max gap-[18px]">
+        <DashboardStatCard title="Active runs" value={String(active)} increaseValue={String(Math.max(active, 1))} description="Running now" variant="green" href="/rehearsals" />
+        <DashboardStatCard title="Completed" value={String(completed)} increaseValue={String(Math.max(completed, 1))} description="Ready for review" variant="light" href="/rehearsals" />
+        <DashboardStatCard title="Blocked" value={String(blocked)} increaseValue={String(Math.max(blocked, 0))} description="Needs attention" variant="light" href="/rehearsals" />
+        <DashboardActionCard />
+      </div>
     </section>
     {featured ? <section className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(350px,.72fr)]"><RehearsalProgress stages={featured.stages} compact /><EvidenceLog logs={featured.logs} rehearsalId={featured.id} /></section> : null}
     <RehearsalTable items={items.slice(0, 8)} title="Recent rehearsals" />
@@ -45,26 +47,26 @@ export function DashboardOverview({ items, featured }: { items: RehearsalListIte
 
 function DashboardStatCard({ title, value, increaseValue, description, variant, href }: { title: string; value: string; increaseValue: string; description: string; variant: "green" | "light"; href: string }) {
   const isGreen = variant === "green";
-  return <div className={`relative h-[230px] w-full min-w-0 overflow-hidden rounded-[28px] antialiased ${isGreen ? "text-[#F7F8F1]" : "text-[#090909]"}`} style={{ background: isGreen ? "linear-gradient(140deg, #19462D 0%, #397652 100%)" : "#FBFBFA" }}>
-    <div className="absolute left-[26px] top-[32px] max-w-[calc(100%-98px)] text-[clamp(22px,1.7vw,26px)] font-medium leading-[1.1] tracking-[-0.5px]">{title}</div>
+  return <div className={`relative h-[230px] w-[340px] shrink-0 overflow-hidden rounded-[28px] antialiased ${isGreen ? "text-[#F7F8F1]" : "text-[#090909]"}`} style={{ background: isGreen ? "linear-gradient(140deg, #19462D 0%, #397652 100%)" : "#FBFBFA" }}>
+    <div className="absolute left-[26px] top-[32px] max-w-[210px] text-[26px] font-medium leading-[1.1] tracking-[-0.5px]">{title}</div>
     <Link href={href} aria-label={`View ${title}`} className={`absolute right-[25px] top-[25px] flex size-[47px] items-center justify-center rounded-full border transition-colors ${isGreen ? "border-transparent bg-[#FAFAF7] text-black hover:bg-white" : "border-black bg-transparent text-black hover:bg-[#F0F0F0]"}`}>
       <ArrowUpRight size={22} strokeWidth={1.25} />
     </Link>
-    <div className={`absolute left-[26px] top-[94px] text-[clamp(64px,4.7vw,72px)] font-normal leading-[0.95] tracking-[-2px] ${isGreen ? "text-[#F6F8E9]" : "text-black"}`}>{value}</div>
+    <div className={`absolute left-[26px] top-[94px] text-[72px] font-normal leading-[0.95] tracking-[-2px] ${isGreen ? "text-[#F6F8E9]" : "text-black"}`}>{value}</div>
     <div className="absolute bottom-[27px] left-[26px] flex items-center gap-[10px]">
       <div className={`flex h-[21px] min-w-[29px] items-center justify-center rounded-[6px] border px-1 ${isGreen ? "border-[#D8F65B] text-[#D8F65B]" : "border-[#5D8E69] text-[#4E8460]"}`}><span className="text-[12px] font-medium leading-none">{increaseValue}</span><svg width="6" height="5" viewBox="0 0 6 5" fill="currentColor" className="ml-1"><polygon points="3,0 6,5 0,5" /></svg></div>
-      <span className={`truncate text-[clamp(14px,1.15vw,17px)] font-normal leading-none tracking-[-0.2px] ${isGreen ? "text-[#D8F65B]" : "text-[#4F7F5F]"}`}>{description}</span>
+      <span className={`text-[17px] font-normal leading-none tracking-[-0.2px] ${isGreen ? "text-[#D8F65B]" : "text-[#4F7F5F]"}`}>{description}</span>
     </div>
   </div>;
 }
 
 function DashboardActionCard() {
-  return <div className="relative h-[230px] w-full min-w-0 overflow-hidden rounded-[28px] bg-[#FBFBFA] antialiased">
-    <div className="absolute left-[26px] top-[32px] max-w-[calc(100%-98px)] text-[clamp(22px,1.7vw,26px)] font-medium leading-[1.1] tracking-[-0.5px] text-[#090909]">Run a rehearsal</div>
+  return <div className="relative h-[230px] w-[340px] shrink-0 overflow-hidden rounded-[28px] bg-[#FBFBFA] antialiased">
+    <div className="absolute left-[26px] top-[32px] max-w-[210px] text-[26px] font-medium leading-[1.1] tracking-[-0.5px] text-[#090909]">Run a rehearsal</div>
     <Link href="/rehearsals" aria-label="Open rehearsals" className="absolute right-[25px] top-[25px] flex size-[47px] items-center justify-center rounded-full border border-black bg-transparent text-black transition-colors hover:bg-[#F0F0F0]">
       <ArrowUpRight size={22} strokeWidth={1.25} />
     </Link>
-    <p className="absolute left-[26px] top-[96px] max-w-[calc(100%-52px)] text-[clamp(15px,1.15vw,18px)] font-normal leading-[1.35] tracking-[-0.25px] text-[#587263]">Create, run, and review pull-request migration rehearsals.</p>
+    <p className="absolute left-[26px] top-[96px] max-w-[250px] text-[18px] font-normal leading-[1.35] tracking-[-0.25px] text-[#587263]">Create, run, and review pull-request migration rehearsals.</p>
     <Link href="/rehearsals" className="absolute bottom-[27px] left-[26px] inline-flex items-center gap-2 rounded-full bg-[#19462D] px-5 py-3 text-[15px] font-semibold text-[#F7F8F1] transition hover:bg-[#123721]">
       View rehearsals
       <ChevronRight size={16} />
