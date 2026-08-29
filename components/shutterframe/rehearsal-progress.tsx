@@ -5,8 +5,6 @@ import type { RehearsalStage } from "@/lib/rehearsal-engine/stages";
 
 const stageColors = ["#F6C143", "#F3AA3B", "#F07542", "#EA5455", "#EA5455", "#EA5455", "#EA5455", "#EA5455"];
 const positions = [5, 18, 31, 44, 57, 70, 83, 96];
-const startPosition = positions[0]!;
-const endPosition = positions[positions.length - 1]!;
 const sparkles = [[-28, -23], [28, -18], [34, 14], [-21, 29], [-35, 8]] as const;
 
 function easeOutQuart(x: number) { return 1 - Math.pow(1 - x, 4); }
@@ -75,11 +73,18 @@ export function RehearsalProgress({ stages }: { stages: RehearsalStage[] }) {
   return <section className="dashboard-card overflow-hidden px-6 py-6 sm:px-10" aria-labelledby="progress-heading">
     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
       <div><p className="dashboard-kicker">Run execution</p><h2 id="progress-heading" className="mt-1 text-xl font-bold tracking-[-.03em] text-[#2C3135] sm:text-2xl">Rehearsal progress</h2><p className={`mt-2 text-sm text-[#8A99A2] transition-opacity duration-700 ${isStarted ? "opacity-100" : "opacity-0"}`}>Evidence-driven milestones · Step {Math.min(currentIndex + 1, stages.length)} of {stages.length}</p></div>
-      <div className={`text-left transition-all duration-700 sm:text-right ${isStarted ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"}`}><p className="text-xs font-medium uppercase tracking-[.14em] text-[#8A99A2]">Current</p><p className={`mt-1 text-lg font-semibold ${isFinished && !reducedMotion ? "sf-scale-finish" : ""}`} style={{ color: stageColors[Math.min(currentIndex, stageColors.length - 1)] }}>{current?.label ?? "Waiting to start"}</p></div>
+      <div className={`min-w-0 max-w-full text-left transition-all duration-700 sm:max-w-[280px] sm:text-right ${isStarted ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"}`}><p className="text-xs font-medium uppercase tracking-[.14em] text-[#8A99A2]">Current</p><p className={`mt-1 truncate text-lg font-semibold ${isFinished && !reducedMotion ? "sf-scale-finish" : ""}`} style={{ color: stageColors[Math.min(currentIndex, stageColors.length - 1)] }}>{current?.label ?? "Waiting to start"}</p></div>
     </div>
-    <div className="relative mx-12 mt-7 h-[180px] sm:mx-16" role="progressbar" aria-label="Rehearsal progress" aria-valuemin={0} aria-valuemax={stages.length} aria-valuenow={reachedStages.size}>
-      <div className="absolute top-[15px] h-5 rounded-full bg-[#EEF3F6] sm:top-[22px] sm:h-6" style={{ left: `${startPosition}%`, right: `${100 - endPosition}%` }} />
-      <div className={`absolute top-[15px] h-5 rounded-full sm:top-[22px] sm:h-6 ${isFinished && !reducedMotion ? "sf-glow-finish" : ""}`} style={{ left: `${startPosition}%`, width: `${Math.max(0, progressPercent - startPosition)}%`, background: "linear-gradient(to right, #F6C143 0%, #F3AA3B 30%, #F07542 60%, #EA5455 100%)", backgroundSize: progressPercent > startPosition ? `${(endPosition - startPosition) * 100 / (progressPercent - startPosition)}% 100%` : "100% 100%", backgroundRepeat: "no-repeat" }} />
+    <div className="relative mx-14 mt-7 h-[180px] sm:mx-20" role="progressbar" aria-label="Rehearsal progress" aria-valuemin={0} aria-valuemax={stages.length} aria-valuenow={reachedStages.size}>
+      {positions.slice(0, -1).map((position, index) => {
+        const nextPosition = positions[index + 1]!;
+        const segmentWidth = nextPosition - position;
+        const fillWidth = Math.max(0, Math.min(progressPercent, nextPosition) - position);
+        return <React.Fragment key={`${position}-${nextPosition}`}>
+          <div className="absolute top-[15px] h-5 rounded-full bg-[#EEF3F6] sm:top-[22px] sm:h-6" style={{ left: `${position}%`, width: `${segmentWidth}%` }} />
+          {fillWidth > 0 ? <div className={`absolute top-[15px] h-5 rounded-full sm:top-[22px] sm:h-6 ${isFinished && !reducedMotion ? "sf-glow-finish" : ""}`} style={{ left: `${position}%`, width: `${fillWidth}%`, background: `linear-gradient(to right, ${stageColors[index]} 0%, ${stageColors[index + 1]} 100%)` }} /> : null}
+        </React.Fragment>;
+      })}
       {stages.map((stage, index) => {
         const reached = reachedStages.has(index);
         const color = stageColors[index] ?? "#EA5455";
