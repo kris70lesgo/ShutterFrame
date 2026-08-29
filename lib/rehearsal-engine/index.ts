@@ -45,12 +45,22 @@ async function ensureCompatibleSession(run: Run) {
   return { run: readyRun, replaced: Boolean(run.trueforgeSessionId) };
 }
 
-export async function runRehearsalEngine(rehearsalId: string): Promise<{ runId: string; outcome: RehearsalOutcome; events: EngineEvent[] }> {
+export async function startRehearsalEngine(rehearsalId: string): Promise<string> {
   const rehearsal = await getRehearsal(rehearsalId);
   if (!rehearsal) throw new Error("Rehearsal was not found.");
   if (!rehearsal.migrationPath) throw new Error("Rehearsal has no persisted migration path.");
-  let run = await loadOrCreateRun(rehearsal.id);
+  const run = await loadOrCreateRun(rehearsal.id);
   await createRunLog({ runId: run.id, level: "info", message: "Rehearsal started", metadata: null });
+  void runRehearsalEngine(rehearsalId, run).catch(() => undefined);
+  return run.id;
+}
+
+export async function runRehearsalEngine(rehearsalId: string, existingRun?: Run): Promise<{ runId: string; outcome: RehearsalOutcome; events: EngineEvent[] }> {
+  const rehearsal = await getRehearsal(rehearsalId);
+  if (!rehearsal) throw new Error("Rehearsal was not found.");
+  if (!rehearsal.migrationPath) throw new Error("Rehearsal has no persisted migration path.");
+  let run = existingRun ?? await loadOrCreateRun(rehearsal.id);
+  if (!existingRun) await createRunLog({ runId: run.id, level: "info", message: "Rehearsal started", metadata: null });
   let events: EngineEvent[] = [];
   let infrastructureFailed = false;
   try {
