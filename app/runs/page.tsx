@@ -1,10 +1,3 @@
-import { WorkspaceLayout } from "@/components/shutterframe/workspace-layout";
-import { InteractiveRunsTable } from "@/components/shutterframe/interactive-runs-table";
+import { redirect } from "next/navigation";
 
-export default function RunsPage() {
-  return (
-    <WorkspaceLayout>
-      <InteractiveRunsTable />
-    </WorkspaceLayout>
-  );
-}
+export default function RunsPage() { redirect("/rehearsals"); }

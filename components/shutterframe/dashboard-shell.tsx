@@ -21,18 +21,18 @@ export function DashboardShell({ children, systemsOperational }: { children: Rea
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const navigation: (NavItemType | NavItemDividerType)[] = [
-    { label: "Dashboard", href: "/", icon: HomeLine },
-    { label: "Runs", href: "/runs", icon: Rows01 },
+    { label: "Dashboard", href: "/dashboard", icon: HomeLine },
+    { label: "Rehearsals", href: "/rehearsals", icon: Rows01 },
     { divider: true },
     { label: "Integrations", href: "/integrations", icon: BarChartSquare02 },
   ];
 
-  const pageTitle = pathname === '/runs' ? 'Runs' : pathname === '/integrations' ? 'Integrations' : 'Dashboard';
+  const pageTitle = pathname.startsWith('/rehearsals') ? 'Rehearsals' : pathname === '/integrations' ? 'Integrations' : 'Dashboard';
 
   return (
     <div className="min-h-screen bg-[#f7f9fb] text-[#142033]">
       <aside className="dashboard-sidebar fixed inset-y-0 left-0 z-20 hidden w-64 flex-col border-r border-[#e2e8f0] bg-white px-4 py-7 lg:flex">
-        <Link href="/" className="px-2" aria-label="ShutterFrame dashboard">
+        <Link href="/dashboard" className="px-2" aria-label="ShutterFrame dashboard">
           <Image src="/brand/shutterframe-logo.svg" alt="ShutterFrame" width={231} height={48} priority className="h-9 w-auto" />
         </Link>
 
@@ -54,7 +54,7 @@ export function DashboardShell({ children, systemsOperational }: { children: Rea
       <div className="lg:pl-64">
         <header className="flex items-center justify-between gap-4 pt-4 pb-2 px-5 lg:px-8 bg-transparent">
           <div className="flex items-center gap-3">
-            <Link href="/" className="lg:hidden" aria-label="ShutterFrame dashboard">
+            <Link href="/dashboard" className="lg:hidden" aria-label="ShutterFrame dashboard">
               <Image src="/brand/shutterframe-mark.svg" alt="ShutterFrame" width={48} height={48} priority className="size-8" />
             </Link>
             <h1 className="text-[26px] sm:text-[30px] font-[550] tracking-[-0.025em] text-[#0F0F0F] font-sans">{pageTitle}</h1>
