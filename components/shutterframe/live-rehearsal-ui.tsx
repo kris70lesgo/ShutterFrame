@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronRight, FileCode2, LoaderCircle, Plus, ShieldCheck, X } from "lucide-react";
+import { ArrowUpRight, ChevronRight, FileCode2, LoaderCircle, Plus, ShieldCheck, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { RehearsalDetail, RehearsalListItem } from "@/lib/database/rehearsal-views";
 import { canReviewRun } from "@/lib/approvals/policy";
 import { RehearsalProgress } from "@/components/shutterframe/rehearsal-progress";
-import { ValidationChecks } from "@/components/shutterframe/validation-checks";
 import { EvidenceLog } from "@/components/shutterframe/evidence-log";
 import { StartRehearsalForm } from "@/components/shutterframe/start-rehearsal-form";
 import { NewRehearsalForm } from "@/components/shutterframe/new-rehearsal-form";
@@ -32,14 +31,31 @@ export function DashboardOverview({ items, featured }: { items: RehearsalListIte
   const active = items.filter((item) => item.runStatus && !terminalStatuses.has(item.runStatus)).length;
   const completed = items.filter((item) => item.runStatus === "completed").length;
   const blocked = items.filter((item) => item.runStatus === "blocked").length;
+  const queued = items.filter((item) => !item.runStatus && item.rehearsalStatus === "queued").length;
   return <div className="space-y-6">
-    <section className="rounded-2xl border border-[#dde5eb] bg-white px-6 py-7 sm:px-8">
-      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#5c7380]">Migration control room</p>
-      <div className="mt-4 flex flex-col justify-between gap-5 md:flex-row md:items-end"><div><h2 className="max-w-2xl text-3xl font-semibold tracking-[-0.04em] text-[#172033]">Every migration gets a rehearsal before it earns production.</h2><p className="mt-3 max-w-xl text-sm leading-6 text-[#64748b]">Live evidence from the exact pull-request commit, reviewed as a single auditable run.</p></div><Link href="/rehearsals" className="inline-flex shrink-0 items-center gap-2 self-start rounded-lg bg-[#1f6071] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#164d5b] md:self-auto">View rehearsals <ChevronRight size={16} /></Link></div>
+    <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <DashboardStatCard title="Active runs" value={String(active)} increaseValue={String(Math.max(active, 1))} description="Running now" variant="green" href="/rehearsals" />
+      <DashboardStatCard title="Completed" value={String(completed)} increaseValue={String(Math.max(completed, 1))} description="Ready for review" variant="light" href="/rehearsals" />
+      <DashboardStatCard title="Blocked" value={String(blocked)} increaseValue={String(Math.max(blocked, 0))} description="Needs attention" variant="light" href="/rehearsals" />
+      <DashboardStatCard title="Control room" value={String(queued)} increaseValue={String(items.length)} description="View rehearsals" variant="light" href="/rehearsals" cta="View" />
     </section>
-    <section className="grid gap-3 sm:grid-cols-3">{[["Active", active, "Runs currently progressing"], ["Completed", completed, "Ready for a human decision"], ["Blocked", blocked, "Needs migration attention"]].map(([label, count, description]) => <div key={String(label)} className="rounded-xl border border-[#e1e7ed] bg-white p-5"><p className="text-xs font-semibold uppercase tracking-[.12em] text-[#788599]">{label}</p><p className="mt-3 text-3xl font-semibold tracking-[-.04em] text-[#172033]">{count}</p><p className="mt-1 text-xs text-[#738095]">{description}</p></div>)}</section>
-    {featured ? <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(350px,.8fr)]"><RehearsalProgress stages={featured.stages} /><div className="grid gap-4"><ValidationChecks evidence={featured.evidence} /><EvidenceLog logs={featured.logs} rehearsalId={featured.id} /></div></section> : null}
+    {featured ? <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(350px,.72fr)]"><RehearsalProgress stages={featured.stages} compact /><EvidenceLog logs={featured.logs} rehearsalId={featured.id} /></section> : null}
     <RehearsalTable items={items.slice(0, 8)} title="Recent rehearsals" />
+  </div>;
+}
+
+function DashboardStatCard({ title, value, increaseValue, description, variant, href, cta }: { title: string; value: string; increaseValue: string; description: string; variant: "green" | "light"; href: string; cta?: string }) {
+  const isGreen = variant === "green";
+  return <div className={`relative h-[210px] overflow-hidden rounded-[28px] p-[26px] antialiased ${isGreen ? "text-[#F7F8F1]" : "border border-[#e4e7e2] text-[#090909]"}`} style={{ background: isGreen ? "linear-gradient(140deg, #19462D 0%, #397652 100%)" : "#FBFBFA" }}>
+    <div className="max-w-[190px] text-[23px] font-medium leading-[1.08] tracking-[-0.02em]">{title}</div>
+    <Link href={href} aria-label={`View ${title}`} className={`absolute right-[22px] top-[22px] flex size-[44px] items-center justify-center rounded-full border transition-colors ${isGreen ? "border-transparent bg-[#FAFAF7] text-black hover:bg-white" : "border-black/80 bg-transparent text-black hover:bg-[#F0F0F0]"}`}>
+      <ArrowUpRight size={22} strokeWidth={1.35} />
+    </Link>
+    <div className={`absolute left-[26px] top-[86px] text-[66px] font-normal leading-[0.95] tracking-[-0.04em] ${isGreen ? "text-[#F6F8E9]" : "text-black"}`}>{value}</div>
+    <div className="absolute bottom-[25px] left-[26px] flex items-center gap-[10px]">
+      <div className={`flex h-[21px] min-w-[29px] items-center justify-center rounded-[6px] border px-1 ${isGreen ? "border-[#D8F65B] text-[#D8F65B]" : "border-[#5D8E69] text-[#4E8460]"}`}><span className="text-[12px] font-medium leading-none">{increaseValue}</span><svg width="6" height="5" viewBox="0 0 6 5" fill="currentColor" className="ml-1"><polygon points="3,0 6,5 0,5" /></svg></div>
+      <span className={`text-[15px] font-normal leading-none tracking-[-0.01em] ${isGreen ? "text-[#D8F65B]" : "text-[#4F7F5F]"}`}>{cta ?? description}</span>
+    </div>
   </div>;
 }
 
