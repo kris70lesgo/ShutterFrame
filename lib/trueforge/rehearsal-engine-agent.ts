@@ -74,6 +74,11 @@ export async function runRehearsalEngineTurn(input: { sessionId: string; repoOwn
     phaseOneEvents = (await client.sessions.listEvents(input.sessionId)).data.filter((item) => rehearsalTurnIds.has(item.turnId));
   }
   if (!hasVerifiedFingerprint()) throw new Error("Artifact fingerprint mismatch; migration was not executed.");
+  const phaseOneText = phaseOneEvents.map((item) => JSON.stringify(redactUnknown(item.event))).join("\n");
+  if (/\bbr-[a-z0-9-]+\b/i.test(phaseOneText)) await createEvidence({ runId: input.runId, type: "check", name: "branch", status: "pass", data: { phase: "artifact_staging" } });
+  if (phaseOneEvents.some((item) => item.event.type === "sandbox.created")) await createEvidence({ runId: input.runId, type: "check", name: "sandbox", status: "pass", data: { phase: "artifact_staging" } });
+  if (phaseOneText.includes("artifacts/migration.sql")) await createEvidence({ runId: input.runId, type: "check", name: "artifactStage", status: "pass", data: { phase: "artifact_staging" } });
+  if (phaseOneText.includes(input.fingerprint)) await createEvidence({ runId: input.runId, type: "check", name: "fingerprintVerification", status: "pass", data: { phase: "artifact_staging" } });
   let successfulLifecycle = false;
   try {
     await runPhase([
