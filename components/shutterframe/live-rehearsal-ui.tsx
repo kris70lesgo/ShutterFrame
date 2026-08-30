@@ -27,51 +27,125 @@ export function StatusPill({ status }: { status: string | null }) {
 function formatDate(value: string | null) { return value ? new Intl.DateTimeFormat("en", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(value)) : "—"; }
 function shortSha(value: string) { return value.slice(0, 8); }
 
-export function DashboardOverview({ items, featured }: { items: RehearsalListItem[]; featured?: RehearsalDetail }) {
-  const active = items.filter((item) => item.runStatus && !terminalStatuses.has(item.runStatus)).length;
-  const completed = items.filter((item) => item.runStatus === "completed").length;
-  const blocked = items.filter((item) => item.runStatus === "blocked").length;
-  return <div className="space-y-6">
-    <section className="-mx-1 overflow-x-auto px-1 pb-2">
-      <div className="flex w-max gap-[18px]">
-        <DashboardStatCard title="Active runs" value={String(active)} increaseValue={String(Math.max(active, 1))} description="Running now" variant="green" href="/rehearsals" />
-        <DashboardStatCard title="Completed" value={String(completed)} increaseValue={String(Math.max(completed, 1))} description="Ready for review" variant="light" href="/rehearsals" />
-        <DashboardStatCard title="Blocked" value={String(blocked)} increaseValue={String(Math.max(blocked, 0))} description="Needs attention" variant="light" href="/rehearsals" />
-        <DashboardActionCard />
-      </div>
-    </section>
-    {featured ? <section className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(350px,.72fr)]"><RehearsalProgress stages={featured.stages} compact /><EvidenceLog logs={featured.logs} rehearsalId={featured.id} /></section> : null}
-    <RehearsalTable items={items.slice(0, 8)} title="Recent rehearsals" />
-  </div>;
+export function DashboardOverview({
+  items,
+  featured,
+}: {
+  items: RehearsalListItem[];
+  featured?: RehearsalDetail;
+}) {
+  const active = items.filter(
+    (item) => item.runStatus && !terminalStatuses.has(item.runStatus)
+  ).length;
+
+  const completed = items.filter(
+    (item) => item.runStatus === "completed"
+  ).length;
+
+  const blocked = items.filter(
+    (item) => item.runStatus === "blocked"
+  ).length;
+
+  return (
+    <div className="space-y-5">
+      <section className="w-full">
+        <div className="grid w-full grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
+          <DashboardStatCard
+            title="Active runs"
+            value={String(active)}
+            increaseValue={String(Math.max(active, 1))}
+            description="Running now"
+            variant="green"
+            href="/rehearsals"
+          />
+
+          <DashboardStatCard
+            title="Completed"
+            value={String(completed)}
+            increaseValue={String(Math.max(completed, 1))}
+            description="Ready for review"
+            variant="light"
+            href="/rehearsals"
+          />
+
+          <DashboardStatCard
+            title="Blocked"
+            value={String(blocked)}
+            increaseValue={String(Math.max(blocked, 0))}
+            description="Needs attention"
+            variant="light"
+            href="/rehearsals"
+          />
+
+          <DashboardActionCard />
+        </div>
+      </section>
+
+      {featured ? (
+        <section className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(350px,.72fr)]">
+          <RehearsalProgress stages={featured.stages} compact />
+          <EvidenceLog
+            logs={featured.logs}
+            rehearsalId={featured.id}
+          />
+        </section>
+      ) : null}
+
+      <RehearsalTable
+        items={items.slice(0, 8)}
+        title="Recent rehearsals"
+      />
+    </div>
+  );
 }
 
 function DashboardStatCard({ title, value, increaseValue, description, variant, href }: { title: string; value: string; increaseValue: string; description: string; variant: "green" | "light"; href: string }) {
   const isGreen = variant === "green";
-  return <div className={`relative h-[230px] w-[340px] shrink-0 overflow-hidden rounded-[28px] antialiased ${isGreen ? "text-[#F7F8F1]" : "text-[#090909]"}`} style={{ background: isGreen ? "linear-gradient(140deg, #19462D 0%, #397652 100%)" : "#FBFBFA" }}>
-    <div className="absolute left-[26px] top-[32px] max-w-[210px] text-[26px] font-medium leading-[1.1] tracking-[-0.5px]">{title}</div>
-    <Link href={href} aria-label={`View ${title}`} className={`absolute right-[25px] top-[25px] flex size-[47px] items-center justify-center rounded-full border transition-colors ${isGreen ? "border-transparent bg-[#FAFAF7] text-black hover:bg-white" : "border-black bg-transparent text-black hover:bg-[#F0F0F0]"}`}>
-      <ArrowUpRight size={22} strokeWidth={1.25} />
-    </Link>
-    <div className={`absolute left-[26px] top-[94px] text-[72px] font-normal leading-[0.95] tracking-[-2px] ${isGreen ? "text-[#F6F8E9]" : "text-black"}`}>{value}</div>
-    <div className="absolute bottom-[27px] left-[26px] flex items-center gap-[10px]">
-      <div className={`flex h-[21px] min-w-[29px] items-center justify-center rounded-[6px] border px-1 ${isGreen ? "border-[#D8F65B] text-[#D8F65B]" : "border-[#5D8E69] text-[#4E8460]"}`}><span className="text-[12px] font-medium leading-none">{increaseValue}</span><svg width="6" height="5" viewBox="0 0 6 5" fill="currentColor" className="ml-1"><polygon points="3,0 6,5 0,5" /></svg></div>
-      <span className={`text-[17px] font-normal leading-none tracking-[-0.2px] ${isGreen ? "text-[#D8F65B]" : "text-[#4F7F5F]"}`}>{description}</span>
+  return <Link
+    href={href}
+    className={[
+      "group relative flex h-[188px] w-full min-w-0 flex-col",
+      "rounded-[26px] px-6 py-5",
+      "transition-transform duration-200 hover:-translate-y-0.5",
+      isGreen ? "bg-gradient-to-br from-[#155432] to-[#25844f] text-white" : "bg-white text-[#111111]",
+    ].join(" ")}
+  >
+    <div className="flex items-start justify-between gap-3">
+      <h3 className="min-w-0 text-[20px] font-medium leading-tight tracking-[-0.02em]">{title}</h3>
+      <div className={["flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full", isGreen ? "bg-white text-black" : "border border-black/80 bg-white text-black"].join(" ")}>
+        <ArrowUpRight size={21} strokeWidth={1.6} className="transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+      </div>
     </div>
-  </div>;
+
+    <div className="mt-3">
+      <div className={["text-[54px] font-normal leading-none tracking-[-0.055em]", isGreen ? "text-[#f6f5e9]" : "text-black"].join(" ")}>{value}</div>
+    </div>
+
+    <div className="mt-auto flex min-w-0 items-center gap-2">
+      <span className={["inline-flex h-[22px] shrink-0 items-center rounded-md border px-1.5", "text-[11px] font-medium", isGreen ? "border-[#c6e637] text-[#d7f44c]" : "border-[#6fa180] text-[#39744e]"].join(" ")}>{increaseValue} ▲</span>
+      <span className={["truncate text-[14px] leading-none", isGreen ? "text-[#d7e444]" : "text-[#658c72]"].join(" ")}>{description}</span>
+    </div>
+  </Link>;
 }
 
 function DashboardActionCard() {
-  return <div className="relative h-[230px] w-[340px] shrink-0 overflow-hidden rounded-[28px] bg-[#FBFBFA] antialiased">
-    <div className="absolute left-[26px] top-[32px] max-w-[210px] text-[26px] font-medium leading-[1.1] tracking-[-0.5px] text-[#090909]">Run a rehearsal</div>
-    <Link href="/rehearsals" aria-label="Open rehearsals" className="absolute right-[25px] top-[25px] flex size-[47px] items-center justify-center rounded-full border border-black bg-transparent text-black transition-colors hover:bg-[#F0F0F0]">
-      <ArrowUpRight size={22} strokeWidth={1.25} />
-    </Link>
-    <p className="absolute left-[26px] top-[96px] max-w-[250px] text-[18px] font-normal leading-[1.35] tracking-[-0.25px] text-[#587263]">Create, run, and review pull-request migration rehearsals.</p>
-    <Link href="/rehearsals" className="absolute bottom-[27px] left-[26px] inline-flex items-center gap-2 rounded-full bg-[#19462D] px-5 py-3 text-[15px] font-semibold text-[#F7F8F1] transition hover:bg-[#123721]">
-      View rehearsals
-      <ChevronRight size={16} />
-    </Link>
-  </div>;
+  return <Link href="/rehearsals" className="group flex h-[188px] w-full min-w-0 flex-col rounded-[26px] bg-white px-6 py-5 text-[#111111] transition-transform duration-200 hover:-translate-y-0.5">
+    <div className="flex items-start justify-between gap-3">
+      <h3 className="text-[20px] font-medium leading-tight tracking-[-0.02em]">Run a rehearsal</h3>
+      <div className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full border border-black/80">
+        <ArrowUpRight size={21} strokeWidth={1.6} className="transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+      </div>
+    </div>
+
+    <p className="mt-5 max-w-[230px] text-[14px] leading-[1.45] text-[#6b8877]">Create, run, and review pull-request migration rehearsals.</p>
+
+    <div className="mt-auto">
+      <span className="inline-flex h-[42px] items-center gap-2 rounded-full bg-[#12552f] px-5 text-[14px] font-medium text-white">
+        View rehearsals
+        <ChevronRight size={16} />
+      </span>
+    </div>
+  </Link>;
 }
 
 export function RehearsalTable({ items, title = "Rehearsals" }: { items: RehearsalListItem[]; title?: string }) {
