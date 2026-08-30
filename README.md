@@ -89,22 +89,20 @@ actual credentials in TrueForge. Never authorize production branches.
 ## Configuring GitHub MCP
 
 Create a GitHub token or app installation with least-privilege access to the
-demo repository, then configure the official GitHub MCP server in TrueForge.
-Set `GITHUB_OWNER` and `GITHUB_REPO` to identify the demo source. TrueForge
-should hold `GITHUB_TOKEN`; it must not be exposed by Next.js or browser code.
+repositories you want to rehearse. ShutterFrame uses `GITHUB_TOKEN` only on the
+server to verify pull requests and fetch exact migration artifacts. It must not
+be exposed by Next.js or browser code.
 
 ## GitHub pull request intake
 
 Apply `migrations/001_create_rehearsals.sql` to the target Neon database before
-using intake. The server-only `POST /api/rehearsals/intake` endpoint accepts an
-owner, repository, and PR number only for the repository configured by
-`GITHUB_OWNER` and `GITHUB_REPO`. It also requires
+using intake. The server-only `POST /api/rehearsals/intake` endpoint accepts a
+valid GitHub owner, repository, and PR number. It also requires
 `Authorization: Bearer <SHUTTERFRAME_INTAKE_TOKEN>`; generate a different long,
 random token for every environment and never expose it to browser code.
 
-Use `GITHUB_INTAKE_PR_NUMBER` (or pass a PR number to
-`pnpm verify:github-intake -- <number>`) to select the pull request verified by
-the cleanup-safe intake check.
+Use `GITHUB_OWNER`, `GITHUB_REPO`, and `GITHUB_INTAKE_PR_NUMBER` only to select
+the repository fixture verified by the cleanup-safe intake check.
 
 ## TrueForge rehearsal sessions
 

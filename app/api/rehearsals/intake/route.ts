@@ -28,13 +28,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
 
-  const configuredOwner = process.env.GITHUB_OWNER;
-  const configuredRepo = process.env.GITHUB_REPO;
-  if (!configuredOwner || !configuredRepo) return NextResponse.json({ error: "Intake endpoint is not configured." }, { status: 503 });
-  if (intakeRequest.owner.toLowerCase() !== configuredOwner.toLowerCase() || intakeRequest.repo.toLowerCase() !== configuredRepo.toLowerCase()) {
-    return NextResponse.json({ error: "Repository is not allowed." }, { status: 403 });
-  }
-
   let intake;
   try {
     intake = await fetchPullRequestIntake(intakeRequest);

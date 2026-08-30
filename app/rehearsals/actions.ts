@@ -18,7 +18,7 @@ export async function createRehearsalAction(_: IntakeFormState, formData: FormDa
     rehearsalId = rehearsal.id;
     await startRehearsalEngine(rehearsalId);
   } catch (error) {
-    if (error instanceof InvalidPullRequestReferenceError) return { error: "Use the configured repository and a valid pull-request number." };
+    if (error instanceof InvalidPullRequestReferenceError) return { error: "Use a valid GitHub owner, repository, and pull-request number." };
     return { error: "The pull request could not be added. Check the number and try again." };
   }
   redirect(`/rehearsals/${rehearsalId}`);
