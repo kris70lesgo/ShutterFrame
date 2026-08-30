@@ -23,6 +23,7 @@ export type Run = {
 
 export async function createStartingRun(rehearsalId: string) {
   const [row] = await getDatabase()`INSERT INTO runs (rehearsal_id, status, started_at) VALUES (${rehearsalId}, ${"starting"}, now()) RETURNING id, rehearsal_id AS "rehearsalId", status, trueforge_session_id AS "trueforgeSessionId", neon_branch_id AS "neonBranchId", daytona_sandbox_id AS "daytonaSandboxId"`;
+  await getDatabase()`UPDATE rehearsals SET status = ${"starting"}, updated_at = now() WHERE id = ${rehearsalId}`;
   return row as Run;
 }
 
@@ -42,6 +43,7 @@ export async function markRunFailed(runId: string) {
 
 export async function markRunStatus(runId: string, status: RunStatus) {
   const [row] = await getDatabase()`UPDATE runs SET status = ${status}, completed_at = CASE WHEN ${status} IN ('completed', 'blocked', 'failed') THEN now() ELSE completed_at END WHERE id = ${runId} RETURNING id, rehearsal_id AS "rehearsalId", status, trueforge_session_id AS "trueforgeSessionId", neon_branch_id AS "neonBranchId", daytona_sandbox_id AS "daytonaSandboxId"`;
+  if (row) await getDatabase()`UPDATE rehearsals SET status = ${status}, updated_at = now() WHERE id = ${row.rehearsalId}`;
   return row as Run | undefined;
 }
 

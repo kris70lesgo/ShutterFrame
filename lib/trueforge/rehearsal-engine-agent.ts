@@ -13,7 +13,7 @@ export type EngineEvent = { type: string; toolCallId?: string; toolName?: string
 
 function agentManifest() {
   return {
-    model: { name: "deepseek/deepseek-v4-flash", params: { temperature: 0, maxTokens: 1200, thinking: { type: "disabled" } } },
+    model: { name: "deepseek/deepseek-v4-flash", params: { temperature: 0, maxTokens: 4096, thinking: { type: "disabled" } } },
     config: { sandbox: { enabled: true, fileDownloads: false }, iterationLimit: 40 },
     mcpServers: [{ name: NEON_MCP_SERVER_NAME, preload: true, enableTools: ["create_branch", "run_sql", "describe_table_schema", "get_database_tables", "delete_branch"], requireApprovalForTools: [] }],
     instructions: "You are ShutterFrame's deterministic rehearsal executor. The run instructions are complete: never call ask_user_question, never request approval, and never wait for user input. Use Neon MCP for every database operation and sandbox.exec only for staging and static inspection of server-provided artifacts. Never clone repositories. Never request, print, read, or expose credentials, connection strings, environment variables, auth headers, API keys, or Git credential files. Never connect the sandbox to a database. Never run database commands in the sandbox. Follow the ordered user instruction exactly and return a compact JSON summary after the tools finish.",
