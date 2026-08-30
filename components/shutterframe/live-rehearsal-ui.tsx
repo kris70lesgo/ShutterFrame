@@ -225,22 +225,24 @@ function RehearsalResultSummary({ rehearsal }: { rehearsal: RehearsalDetail }) {
   const titleClass = tone === "green" ? "text-emerald-600" : tone === "red" ? "text-red-500" : "text-blue-600";
   const label = blocked ? "Blocked" : failed ? "Failed" : passed ? "Passed" : "Running";
   const message = passed ? "All recorded checks passed successfully." : blocked ? "A required safety check failed. Human approval is unavailable." : failed ? "Infrastructure failed before the rehearsal could complete." : "The rehearsal is still collecting evidence.";
-  return <section className="grid gap-4 rounded-xl border border-[#e0e7ed] bg-white px-5 py-5 shadow-[0_1px_0_rgba(15,23,42,.02)] lg:grid-cols-[1.2fr_.9fr_.75fr_.75fr_.85fr] lg:items-center">
-    <div className="flex items-center gap-4">
+  return <section className="flex min-w-0 flex-col gap-5 rounded-xl border border-[#e0e7ed] bg-white px-5 py-5 shadow-[0_1px_0_rgba(15,23,42,.02)] xl:flex-row xl:items-center">
+    <div className="flex min-w-0 items-center gap-4 xl:w-[260px] xl:shrink-0">
       <span className={`grid size-11 shrink-0 place-items-center rounded-full ${iconClass}`}>{blocked || failed ? <XCircle size={25} /> : <CheckCircle2 size={25} />}</span>
-      <div><p className="dashboard-kicker">Rehearsal result</p><h3 className={`mt-1 text-xl font-bold leading-none ${titleClass}`}>{label}</h3><p className="mt-2 text-xs font-medium text-[#718095]">{message}</p></div>
+      <div className="min-w-0"><p className="dashboard-kicker">Rehearsal result</p><h3 className={`mt-1 text-xl font-bold leading-none ${titleClass}`}>{label}</h3><p className="mt-2 max-w-[170px] text-xs font-medium leading-5 text-[#718095]">{message}</p></div>
     </div>
-    <SummaryMetric label="Migration path" value={rehearsal.migrationPath ?? "—"} />
-    <SummaryMetric label="Commit" value={shortSha(rehearsal.commitSha)} mono />
-    <SummaryMetric label="Execution time" value={elapsedTime(rehearsal.runCreatedAt, rehearsal.completedAt)} />
-    <SummaryMetric label="Checks passed" value={`${completedStages}/${required} required`} valueClass={tone === "green" ? "text-emerald-600" : tone === "red" ? "text-red-500" : "text-blue-600"} />
+    <div className="grid min-w-0 flex-1 gap-4 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_120px_110px_140px] xl:items-center">
+      <SummaryMetric label="Migration path" value={rehearsal.migrationPath ?? "—"} wide />
+      <SummaryMetric label="Commit" value={shortSha(rehearsal.commitSha)} mono />
+      <SummaryMetric label="Execution time" value={elapsedTime(rehearsal.runCreatedAt, rehearsal.completedAt)} />
+      <SummaryMetric label="Checks passed" value={`${completedStages}/${required} required`} valueClass={tone === "green" ? "text-emerald-600" : tone === "red" ? "text-red-500" : "text-blue-600"} />
+    </div>
   </section>;
 }
 
-function SummaryMetric({ label, value, mono = false, valueClass = "text-[#243246]" }: { label: string; value: string; mono?: boolean; valueClass?: string }) {
-  return <div className="border-[#e5ebf0] lg:border-l lg:pl-8">
+function SummaryMetric({ label, value, mono = false, wide = false, valueClass = "text-[#243246]" }: { label: string; value: string; mono?: boolean; wide?: boolean; valueClass?: string }) {
+  return <div className="min-w-0 border-[#e5ebf0] sm:border-l sm:pl-5 xl:pl-7">
     <p className="text-xs font-semibold text-[#536176]">{label}</p>
-    <p className={`mt-2 truncate text-sm font-bold ${mono ? "font-mono" : ""} ${valueClass}`}>{value}</p>
+    <p title={value} className={`mt-2 min-w-0 ${wide ? "break-all text-[13px] leading-5 xl:line-clamp-2" : "truncate text-sm"} font-bold ${mono ? "font-mono" : ""} ${valueClass}`}>{value}</p>
   </div>;
 }
 
@@ -253,16 +255,16 @@ function DatabaseChangesCard({ rehearsal }: { rehearsal: RehearsalDetail }) {
     <div className="mt-5 space-y-4">
       <div>
         <p className="text-sm font-bold text-emerald-600">Added</p>
-        <div className="mt-2 rounded-lg bg-[#f8fbfa] px-4 py-3">
+        <div className="mt-2 min-w-0 rounded-lg bg-[#f8fbfa] px-4 py-3">
           <p className="font-semibold text-[#344054]">{!destructive && hasMigration ? entity : "No additive change detected"}</p>
-          <p className="mt-1 font-mono text-xs text-[#6b7b8e]">{!destructive && hasMigration ? rehearsal.migrationPath : "None"}</p>
+          <p title={!destructive && hasMigration ? rehearsal.migrationPath ?? undefined : undefined} className="mt-1 min-w-0 break-all font-mono text-xs leading-5 text-[#6b7b8e] line-clamp-2">{!destructive && hasMigration ? rehearsal.migrationPath : "None"}</p>
         </div>
       </div>
       <div>
         <p className="text-sm font-bold text-red-500">Removed</p>
-        <div className="mt-2 rounded-lg bg-[#fffafa] px-4 py-3">
+        <div className="mt-2 min-w-0 rounded-lg bg-[#fffafa] px-4 py-3">
           <p className="font-semibold text-[#344054]">{destructive && hasMigration ? entity : "None"}</p>
-          <p className="mt-1 font-mono text-xs text-[#6b7b8e]">{destructive && hasMigration ? rehearsal.migrationPath : "No removed objects recorded"}</p>
+          <p title={destructive && hasMigration ? rehearsal.migrationPath ?? undefined : undefined} className="mt-1 min-w-0 break-all font-mono text-xs leading-5 text-[#6b7b8e] line-clamp-2">{destructive && hasMigration ? rehearsal.migrationPath : "No removed objects recorded"}</p>
         </div>
       </div>
     </div>
