@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowUpRight, ChevronRight, FileCode2, LoaderCircle, Plus, ShieldCheck, X } from "lucide-react";
+import { AlertTriangle, ArrowUpRight, CheckCircle2, ChevronRight, Database, FileCode2, LoaderCircle, Plus, Shield, ShieldCheck, X, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { RehearsalDetail, RehearsalListItem } from "@/lib/database/rehearsal-views";
 import { canReviewRun } from "@/lib/approvals/policy";
@@ -26,6 +26,29 @@ export function StatusPill({ status }: { status: string | null }) {
 
 function formatDate(value: string | null) { return value ? new Intl.DateTimeFormat("en", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(value)) : "—"; }
 function shortSha(value: string) { return value.slice(0, 8); }
+function evidenceHas(rehearsal: RehearsalDetail, terms: string[]) { return rehearsal.evidence.some((item) => terms.some((term) => item.name.includes(term) || item.type.includes(term))); }
+function elapsedTime(startedAt: string | null, completedAt: string | null) {
+  if (!startedAt || !completedAt) return "—";
+  const ms = Math.max(0, new Date(completedAt).getTime() - new Date(startedAt).getTime());
+  if (!Number.isFinite(ms) || ms === 0) return "—";
+  if (ms < 10000) return `${(ms / 1000).toFixed(2)}s`;
+  return `${Math.round(ms / 1000)}s`;
+}
+function migrationLabel(path: string | null) {
+  if (!path) return "No migration";
+  return path.split("/").at(-1)?.replace(/^\d+[_-]?/, "").replace(/\.sql$/i, "").replaceAll("_", " ") ?? path;
+}
+function migrationEntity(path: string | null) {
+  const label = migrationLabel(path);
+  const createMatch = label.match(/create\s+(.+)/i);
+  const dropMatch = label.match(/drop\s+(.+)/i);
+  if (createMatch?.[1]) return createMatch[1].replace(/\btable\b/i, "").trim();
+  if (dropMatch?.[1]) return dropMatch[1].replace(/\btable\b|\bcolumn\b/i, "").trim();
+  return label;
+}
+function isDestructiveMigration(rehearsal: RehearsalDetail) {
+  return rehearsal.runStatus === "blocked" || /(?:drop|remove|delete|truncate)/i.test(rehearsal.migrationPath ?? "");
+}
 
 export function DashboardOverview({
   items,
@@ -168,12 +191,113 @@ export function RehearsalDetailView({ rehearsal }: { rehearsal: RehearsalDetail 
   useEffect(() => { if (!active) return; const timer = window.setInterval(() => router.refresh(), 5000); return () => window.clearInterval(timer); }, [active, router]);
   const runActive = rehearsal.runStatus && !terminalStatuses.has(rehearsal.runStatus);
   return <div className="space-y-5"><section className="rounded-xl border border-[#dfe7ed] bg-white px-6 py-6"><div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-start"><div><Link href="/rehearsals" className="text-xs font-semibold text-[#317083] hover:underline">← All rehearsals</Link><h2 className="mt-3 text-2xl font-semibold tracking-[-.035em] text-[#172033]">{rehearsal.repoOwner}/{rehearsal.repoName} <span className="text-[#748195]">· PR #{rehearsal.prNumber}</span></h2><p className="mt-2 flex items-center gap-2 font-mono text-xs text-[#64748b]"><FileCode2 size={14} />{rehearsal.migrationPath ?? "No migration path"}</p></div><div className="flex w-full flex-col items-start gap-3 lg:w-auto lg:items-end"><StatusPill status={rehearsal.runStatus ?? rehearsal.rehearsalStatus} /><StartRehearsalForm rehearsalId={rehearsal.id} disabled={Boolean(runActive)} /></div></div></section>
+    <BlockReasonBanner rehearsal={rehearsal} />
+    <RehearsalResultSummary rehearsal={rehearsal} />
+    <div className="grid items-start gap-5 xl:grid-cols-2">
+      <DatabaseChangesCard rehearsal={rehearsal} />
+      <ImpactSafetyCard rehearsal={rehearsal} />
+    </div>
     <RehearsalProgress stages={rehearsal.stages} />
     <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
       <EvidencePanel evidence={rehearsal.evidence} />
       <ApprovalCard runId={rehearsal.runId} runStatus={rehearsal.runStatus} approval={rehearsal.approval} />
     </div>
     <LogPanel logs={rehearsal.logs} />
+  </div>;
+}
+
+function BlockReasonBanner({ rehearsal }: { rehearsal: RehearsalDetail }) {
+  if (rehearsal.runStatus !== "blocked") return null;
+  return <section className="flex items-start gap-3 rounded-xl border border-orange-200 bg-orange-50 px-5 py-3 text-sm text-[#71401d]">
+    <AlertTriangle className="mt-0.5 size-4 shrink-0 text-orange-500" />
+    <p><span className="font-semibold">Why blocked?</span> This rehearsal recorded a required safety or validation failure. Review the impact and evidence before approval.</p>
+  </section>;
+}
+
+function RehearsalResultSummary({ rehearsal }: { rehearsal: RehearsalDetail }) {
+  const blocked = rehearsal.runStatus === "blocked";
+  const failed = rehearsal.runStatus === "failed";
+  const passed = rehearsal.runStatus === "completed";
+  const tone = blocked || failed ? "red" : passed ? "green" : "blue";
+  const completedStages = rehearsal.stages.filter((stage) => stage.state === "completed").length;
+  const required = rehearsal.stages.length;
+  const iconClass = tone === "green" ? "bg-emerald-500 text-white" : tone === "red" ? "bg-red-500 text-white" : "bg-blue-500 text-white";
+  const titleClass = tone === "green" ? "text-emerald-600" : tone === "red" ? "text-red-500" : "text-blue-600";
+  const label = blocked ? "Blocked" : failed ? "Failed" : passed ? "Passed" : "Running";
+  const message = passed ? "All recorded checks passed successfully." : blocked ? "A required safety check failed. Human approval is unavailable." : failed ? "Infrastructure failed before the rehearsal could complete." : "The rehearsal is still collecting evidence.";
+  return <section className="grid gap-4 rounded-xl border border-[#e0e7ed] bg-white px-5 py-5 shadow-[0_1px_0_rgba(15,23,42,.02)] lg:grid-cols-[1.2fr_.9fr_.75fr_.75fr_.85fr] lg:items-center">
+    <div className="flex items-center gap-4">
+      <span className={`grid size-11 shrink-0 place-items-center rounded-full ${iconClass}`}>{blocked || failed ? <XCircle size={25} /> : <CheckCircle2 size={25} />}</span>
+      <div><p className="dashboard-kicker">Rehearsal result</p><h3 className={`mt-1 text-xl font-bold leading-none ${titleClass}`}>{label}</h3><p className="mt-2 text-xs font-medium text-[#718095]">{message}</p></div>
+    </div>
+    <SummaryMetric label="Migration path" value={rehearsal.migrationPath ?? "—"} />
+    <SummaryMetric label="Commit" value={shortSha(rehearsal.commitSha)} mono />
+    <SummaryMetric label="Execution time" value={elapsedTime(rehearsal.runCreatedAt, rehearsal.completedAt)} />
+    <SummaryMetric label="Checks passed" value={`${completedStages}/${required} required`} valueClass={tone === "green" ? "text-emerald-600" : tone === "red" ? "text-red-500" : "text-blue-600"} />
+  </section>;
+}
+
+function SummaryMetric({ label, value, mono = false, valueClass = "text-[#243246]" }: { label: string; value: string; mono?: boolean; valueClass?: string }) {
+  return <div className="border-[#e5ebf0] lg:border-l lg:pl-8">
+    <p className="text-xs font-semibold text-[#536176]">{label}</p>
+    <p className={`mt-2 truncate text-sm font-bold ${mono ? "font-mono" : ""} ${valueClass}`}>{value}</p>
+  </div>;
+}
+
+function DatabaseChangesCard({ rehearsal }: { rehearsal: RehearsalDetail }) {
+  const destructive = isDestructiveMigration(rehearsal);
+  const entity = migrationEntity(rehearsal.migrationPath);
+  const hasMigration = Boolean(rehearsal.migrationPath);
+  return <section className="min-h-[222px] rounded-xl border border-[#e0e7ed] bg-white p-5">
+    <div className="flex items-center gap-3"><Database className="size-5 text-[#2f8494]" /><h3 className="dashboard-kicker">Database changes</h3></div>
+    <div className="mt-5 space-y-4">
+      <div>
+        <p className="text-sm font-bold text-emerald-600">Added</p>
+        <div className="mt-2 rounded-lg bg-[#f8fbfa] px-4 py-3">
+          <p className="font-semibold text-[#344054]">{!destructive && hasMigration ? entity : "No additive change detected"}</p>
+          <p className="mt-1 font-mono text-xs text-[#6b7b8e]">{!destructive && hasMigration ? rehearsal.migrationPath : "None"}</p>
+        </div>
+      </div>
+      <div>
+        <p className="text-sm font-bold text-red-500">Removed</p>
+        <div className="mt-2 rounded-lg bg-[#fffafa] px-4 py-3">
+          <p className="font-semibold text-[#344054]">{destructive && hasMigration ? entity : "None"}</p>
+          <p className="mt-1 font-mono text-xs text-[#6b7b8e]">{destructive && hasMigration ? rehearsal.migrationPath : "No removed objects recorded"}</p>
+        </div>
+      </div>
+    </div>
+  </section>;
+}
+
+function ImpactSafetyCard({ rehearsal }: { rehearsal: RehearsalDetail }) {
+  const destructive = isDestructiveMigration(rehearsal);
+  const completedStages = rehearsal.stages.filter((stage) => stage.state === "completed").length;
+  const failedEvidence = rehearsal.evidence.filter((item) => item.status === "fail" || item.status === "failed" || item.status === "blocked").length;
+  const rowCounts = evidenceHas(rehearsal, ["rowCounts", "row_counts", "row"]);
+  const recommendation = rehearsal.runStatus === "blocked" ? "Not eligible for approval" : rehearsal.runStatus === "completed" ? "Eligible for human approval" : "Waiting for more evidence";
+  return <section className="min-h-[222px] rounded-xl border border-[#e0e7ed] bg-white p-5">
+    <div className="flex items-center gap-3"><Shield className="size-5 text-[#2f8494]" /><h3 className="dashboard-kicker">{rehearsal.runStatus === "blocked" ? "Block reason" : "Impact & safety"}</h3></div>
+    <dl className="mt-5 space-y-3 text-sm">
+      <SafetyRow label="Destructive operations" value={destructive ? "Detected" : "None"} bad={destructive} />
+      <SafetyRow label="Tables affected" value={evidenceHas(rehearsal, ["schema", "table"]) ? "Verified" : rehearsal.migrationPath ? "1 likely" : "—"} />
+      <SafetyRow label="Checks completed" value={`${completedStages}/${rehearsal.stages.length}`} bad={failedEvidence > 0} />
+      <SafetyRow label="Row-count observations" value={rowCounts ? "Recorded" : "Not recorded"} muted={!rowCounts} />
+      <SafetyRow label="Unexpected row loss" value={destructive ? "Review required" : "None"} bad={destructive} />
+    </dl>
+    <div className="mt-5 flex items-center justify-between gap-3 border-t border-[#edf1f4] pt-4">
+      <span className="text-sm font-semibold text-[#344054]">Recommendation</span>
+      <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold ring-1 ring-inset ${rehearsal.runStatus === "blocked" ? "bg-red-50 text-red-600 ring-red-200" : rehearsal.runStatus === "completed" ? "bg-emerald-50 text-emerald-700 ring-emerald-200" : "bg-slate-50 text-slate-600 ring-slate-200"}`}>
+        {rehearsal.runStatus === "blocked" ? <XCircle size={13} /> : <ShieldCheck size={13} />}
+        {recommendation}
+      </span>
+    </div>
+  </section>;
+}
+
+function SafetyRow({ label, value, bad = false, muted = false }: { label: string; value: string; bad?: boolean; muted?: boolean }) {
+  return <div className="flex items-center justify-between gap-4 border-b border-[#eef2f5] pb-2 last:border-b-0">
+    <dt className="text-[#536176]">{label}</dt>
+    <dd className={`font-bold ${bad ? "text-red-500" : muted ? "text-[#8a98a8]" : "text-emerald-600"}`}>{value}</dd>
   </div>;
 }
 
