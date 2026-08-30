@@ -14,7 +14,7 @@ const services = [
   { key: "neonConfigured", label: "Neon", note: "Branch database", icon: Database },
   { key: "daytonaConfigured", label: "Daytona", note: "Sandbox", icon: Box },
   { key: "githubConfigured", label: "GitHub", note: "Pull request source", icon: Github },
-  { key: "modelConfigured", label: "Groq", note: "Model through TrueForge", icon: ShieldCheck },
+  { key: "modelConfigured", label: "DeepSeek", note: "Model through TrueForge", icon: ShieldCheck },
 ] as const;
 
 export function SystemStatusPanel({ status }: { status: SystemStatus }) {

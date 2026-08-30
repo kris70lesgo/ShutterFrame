@@ -2,11 +2,11 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Create a real TrueForge/Groq session for a persisted rehearsal and store its session ID on a ready run.
+**Goal:** Create a real TrueForge/DeepSeek session for a persisted rehearsal and store its session ID on a ready run.
 
 **Architecture:** A server-only orchestration service reads the minimal rehearsal metadata from Neon, creates a `starting` run, creates or refreshes a focused TrueForge agent, and sends that metadata as the only session context. The service records the returned TrueForge session ID and promotes the run to `ready`; it does not invoke MCP tools, Neon preview branching, Daytona, or migrations.
 
-**Tech Stack:** Next.js server modules, `@neondatabase/serverless`, `@truefoundry/trueforge-sdk`, Groq configured only in local TrueForge, TypeScript, Vitest.
+**Tech Stack:** Next.js server modules, `@neondatabase/serverless`, `@truefoundry/trueforge-sdk`, DeepSeek configured only in local TrueForge, TypeScript, Vitest.
 
 ---
 
@@ -36,7 +36,7 @@
 
 **Step 1:** Write tests for the prompt/context builder that permit only repository owner/name, PR number, commit SHA, and migration path.
 
-**Step 2:** Implement a server-only service that loads the rehearsal, creates a starting run, creates a TrueForge session with a dedicated agent, sends a deterministic Groq confirmation turn, persists the session ID, and marks the run ready.
+**Step 2:** Implement a server-only service that loads the rehearsal, creates a starting run, creates a TrueForge session with a dedicated agent, sends a deterministic DeepSeek confirmation turn, persists the session ID, and marks the run ready.
 
 **Step 3:** Ensure all failures are surfaced without logging credentials and do not call tools or execute migrations.
 
@@ -50,7 +50,7 @@
 - Modify: `.env.example`
 - Modify: `README.md`
 
-**Step 1:** Add a cleanup-safe verifier that creates temporary rehearsal/run records, invokes the orchestration service, validates the exact Groq-through-TrueForge reply, verifies the stored session ID, and deletes temporary rows.
+**Step 1:** Add a cleanup-safe verifier that creates temporary rehearsal/run records, invokes the orchestration service, validates the exact DeepSeek-through-TrueForge reply, verifies the stored session ID, and deletes temporary rows.
 
 **Step 2:** Document the server-only configuration and verifier command without exposing secrets.
 

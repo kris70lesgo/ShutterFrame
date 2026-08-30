@@ -5,7 +5,7 @@ import { createHash } from "node:crypto";
 const MAX_MIGRATION_BYTES = 512 * 1024;
 const ownerOrRepo = /^[A-Za-z0-9_.-]+$/;
 const commitSha = /^[a-f0-9]{40}$/i;
-const safePath = /^(?:migrations|db\/migrations|database\/migrations)(?:\/[A-Za-z0-9_.-]+)+\.sql$/i;
+const safePath = /^(?!.*(?:^|\/)\.\.(?:\/|$))(?:[A-Za-z0-9_.-]+\/)*[A-Za-z0-9_.-]+\.sql$/i;
 
 export class GitHubArtifactError extends Error {
   constructor(message = "GitHub artifact retrieval failed.") { super(message); }

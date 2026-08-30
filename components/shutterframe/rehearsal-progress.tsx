@@ -1,15 +1,114 @@
-import { ProgressIndicator, type ProgressStep } from "@/components/ui/progress-indicator";
+"use client";
+
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { RehearsalStage } from "@/lib/rehearsal-engine/stages";
 
-function toStep(stage: RehearsalStage): ProgressStep {
-  return { label: stage.label, detail: stage.state, state: stage.state === "completed" ? "complete" : stage.state === "current" ? "active" : "pending" };
+const stageColors = ["#F6C143", "#F3AA3B", "#F07542", "#EA5455", "#EA5455", "#EA5455", "#EA5455", "#EA5455"];
+const positions = [7, 19.3, 31.6, 43.9, 56.2, 68.5, 80.8, 93];
+const sparkles = [[-28, -23], [28, -18], [34, 14], [-21, 29], [-35, 8]] as const;
+
+function easeOutQuart(x: number) { return 1 - Math.pow(1 - x, 4); }
+
+function stageTarget(stages: RehearsalStage[]) {
+  const activeIndex = stages.findIndex((stage) => stage.state === "current" || stage.state === "warning" || stage.state === "blocked" || stage.state === "failed");
+  if (activeIndex >= 0) return positions[activeIndex] ?? 0;
+  const completeCount = stages.filter((stage) => stage.state === "completed").length;
+  if (completeCount >= stages.length) return 100;
+  return completeCount ? positions[Math.min(completeCount - 1, positions.length - 1)]! : 0;
 }
 
-export function RehearsalProgress({ stages }: { stages: RehearsalStage[] }) {
-  const current = stages.find((stage) => stage.state === "current") ?? stages.find((stage) => stage.state === "blocked" || stage.state === "failed") ?? stages.find((stage) => stage.state === "completed");
-  return <section className="dashboard-card px-5 py-6 sm:px-7" aria-labelledby="progress-heading">
-    <div className="flex items-start justify-between gap-5"><div><p className="dashboard-kicker">Run execution</p><h2 id="progress-heading" className="mt-1 text-base font-bold tracking-[-0.02em] text-[#1c2940]">Rehearsal progress</h2><p className="mt-1 text-xs text-[#748195]">{current ? `${current.label} · ${current.state}` : "Waiting for engine evidence"}</p></div><span className="rounded-full border border-[#dfe8e4] bg-[#f3fbf6] px-2.5 py-1 text-[11px] font-semibold text-[#2b7b50]">{stages.filter((stage) => stage.state === "completed").length}/{stages.length} complete</span></div>
-    <div className="py-8"><ProgressIndicator steps={stages.map(toStep)} /></div>
-    <div className="grid grid-cols-2 gap-x-4 gap-y-3 border-t border-[#edf1f5] pt-4 sm:grid-cols-4">{stages.map((stage) => <div key={stage.key} className="min-w-0"><p className="truncate text-xs font-semibold text-[#405067]">{stage.label}</p><p className="mt-0.5 text-[11px] capitalize text-[#7d8a9c]">{stage.state}</p></div>)}</div>
+function progressIndex(progress: number, stageCount: number) {
+  let reachedIndex = -1;
+  for (let index = positions.length - 1; index >= 0; index -= 1) {
+    if (progress >= positions[index]!) {
+      reachedIndex = index;
+      break;
+    }
+  }
+  if (progress >= 99 && stageCount > 0) return stageCount - 1;
+  return Math.max(reachedIndex, 0);
+}
+
+function displayTitle(label: string) {
+  const words = label.split(" ");
+  return words.length > 1 ? `${words.slice(0, -1).join(" ")}\n${words.at(-1)}` : label;
+}
+
+/** The supplied progress choreography, driven only by persisted run evidence. */
+export function RehearsalProgress({ stages, compact = false }: { stages: RehearsalStage[]; compact?: boolean }) {
+  const signature = useMemo(() => stages.map((stage) => `${stage.key}:${stage.state}`).join("|"), [stages]);
+  const target = useMemo(() => stageTarget(stages), [stages]);
+  const [progressPercent, setProgressPercent] = useState(0);
+  const [reachedStages, setReachedStages] = useState<Set<number>>(new Set());
+  const [isFinished, setIsFinished] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [isStarted, setIsStarted] = useState(false);
+  const progressRef = useRef(0);
+  const hasPlayed = useRef(false);
+  const current = stages.find((stage) => stage.state === "current" || stage.state === "warning" || stage.state === "blocked" || stage.state === "failed") ?? stages.at(-1);
+  const targetIndex = Math.max(stages.indexOf(current ?? stages[0]!), 0);
+  const visibleIndex = progressIndex(progressPercent, stages.length);
+  const visibleStage = stages[Math.min(visibleIndex, stages.length - 1)] ?? current;
+
+  useEffect(() => {
+    setIsStarted(true);
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReducedMotion(mediaQuery.matches);
+    if (mediaQuery.matches) {
+      progressRef.current = target;
+      setProgressPercent(target);
+      setReachedStages(new Set(positions.map((position, index) => position <= target ? index : -1).filter((index) => index >= 0)));
+      setIsFinished(true);
+      return;
+    }
+    const from = progressRef.current;
+    const duration = hasPlayed.current ? 460 : 1900;
+    hasPlayed.current = true;
+    setIsFinished(false);
+    let startedAt: number | null = null;
+    let frame = 0;
+    const animate = (timestamp: number) => {
+      if (startedAt === null) startedAt = timestamp;
+      const raw = Math.min((timestamp - startedAt) / duration, 1);
+      const next = from + ((target - from) * easeOutQuart(raw));
+      progressRef.current = next;
+      setProgressPercent(next);
+      setReachedStages((previous) => {
+        const reached = new Set(previous);
+        positions.forEach((position, index) => { if (next >= position) reached.add(index); });
+        return reached;
+      });
+      if (raw < 1) frame = requestAnimationFrame(animate);
+      else setIsFinished(true);
+    };
+    frame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frame);
+  }, [signature, target]);
+
+  return <section className={`dashboard-card overflow-hidden ${compact ? "px-5 py-4" : "px-6 py-6 sm:px-10"}`} aria-labelledby="progress-heading">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div><p className="dashboard-kicker">Run execution</p><h2 id="progress-heading" className={`mt-1 font-bold tracking-[-.03em] text-[#2C3135] ${compact ? "text-lg" : "text-xl sm:text-2xl"}`}>Rehearsal progress</h2><p className={`mt-2 text-sm text-[#8A99A2] transition-opacity duration-700 ${isStarted ? "opacity-100" : "opacity-0"}`}>Evidence-driven milestones · Step {Math.min((isFinished ? targetIndex : visibleIndex) + 1, stages.length)} of {stages.length}</p></div>
+      <div className={`min-w-0 max-w-full text-left transition-all duration-700 sm:max-w-[280px] sm:text-right ${compact ? "hidden md:block" : ""} ${isStarted ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"}`}><p className="text-xs font-medium uppercase tracking-[.14em] text-[#8A99A2]">Current</p><p className={`mt-1 truncate text-lg font-semibold ${isFinished && !reducedMotion ? "sf-scale-finish" : ""}`} style={{ color: stageColors[Math.min(isFinished ? targetIndex : visibleIndex, stageColors.length - 1)] }}>{(isFinished ? current : visibleStage)?.label ?? "Waiting to start"}</p></div>
+    </div>
+    <div className={`relative ${compact ? "mx-6 mt-6 h-[102px] sm:mx-8" : "mx-10 mt-8 h-[190px] sm:mx-14"}`} role="progressbar" aria-label="Rehearsal progress" aria-valuemin={0} aria-valuemax={stages.length} aria-valuenow={reachedStages.size}>
+      <div className={`absolute left-0 right-0 rounded-full bg-[#EEF3F6] ${compact ? "top-[13px] h-4" : "top-[15px] h-5 sm:top-[24px] sm:h-6"}`} />
+      <div className={`absolute left-0 rounded-full ${compact ? "top-[13px] h-4" : "top-[15px] h-5 sm:top-[24px] sm:h-6"} ${isFinished && !reducedMotion ? "sf-glow-finish" : ""}`} style={{ width: `${progressPercent}%`, background: "linear-gradient(to right, #F6C143 0%, #F3AA3B 30%, #F07542 60%, #EA5455 100%)", backgroundSize: progressPercent > 0 ? `${10000 / progressPercent}% 100%` : "100% 100%", backgroundRepeat: "no-repeat" }} />
+      {stages.map((stage, index) => {
+        const reached = reachedStages.has(index);
+        const color = stageColors[index] ?? "#EA5455";
+        return <div key={stage.key} className="absolute top-0 z-10 flex w-0 flex-col items-center" style={{ left: `${positions[index] ?? 96}%` }}>
+          <div className={`relative flex -translate-x-1/2 items-center justify-center rounded-full bg-white ${compact ? "size-[44px]" : "size-[56px] sm:size-[76px]"} ${reached && !reducedMotion ? "sf-pop" : ""}`}>
+            {reached && !reducedMotion ? <div className="pointer-events-none absolute left-1/2 top-1/2">{sparkles.map(([x, y], sparkleIndex) => <span key={sparkleIndex} className="sf-sparkle absolute size-1.5 rounded-full" style={{ backgroundColor: color, "--tx": `${x}px`, "--ty": `${y}px`, animationDelay: `${sparkleIndex * 38}ms` } as React.CSSProperties} />)}</div> : null}
+            <div className={`flex items-center justify-center rounded-full transition-colors duration-300 ${compact ? "size-[38px]" : "size-[48px] sm:size-[64px]"}`} style={{ backgroundColor: reached ? color : "#EEF3F6" }}><StarIcon className={`transition-opacity duration-300 ${compact ? "size-4" : "size-5 sm:size-8"} ${reached && !reducedMotion ? "sf-star-pop" : ""}`} style={{ color: reached ? "white" : "#AAB5BA", opacity: reached ? 1 : .8 }} /></div>
+          </div>
+          <div className={`-translate-x-1/2 text-center ${compact ? "mt-2 w-[70px]" : "mt-3 w-[82px] sm:mt-4 sm:w-[116px]"}`}><p className={`whitespace-pre-line font-normal leading-tight transition-colors duration-300 ${compact ? "text-[10px]" : "text-[11px] sm:text-base"}`} style={{ color: reached ? color : "#AAB5BA" }}>{displayTitle(stage.label)}</p>{!compact ? <p className="mt-1 text-[10px] sm:mt-2 sm:text-xs" style={{ color: reached ? color : "#AAB5BA", opacity: reached ? .7 : .8 }}>{reached ? "Complete" : "Pending"}</p> : null}</div>
+        </div>;
+      })}
+    </div>
+    <style>{`@keyframes sf-pop{0%{transform:translateX(-50%) scale(1)}45%{transform:translateX(-50%) scale(1.15)}70%{transform:translateX(-50%) scale(.96)}100%{transform:translateX(-50%) scale(1)}}@keyframes sf-star-pop{0%{transform:scale(.8) rotate(-8deg)}45%{transform:scale(1.18) rotate(5deg)}100%{transform:scale(1) rotate(0)}}@keyframes sf-sparkle{0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}20%{opacity:1;transform:translate(calc(-50% + var(--tx)),calc(-50% + var(--ty))) scale(1)}100%{opacity:0;transform:translate(calc(-50% + var(--tx) * 1.5),calc(-50% + var(--ty) * 1.5)) scale(0)}}@keyframes sf-glow{0%{filter:brightness(1)}50%{filter:brightness(1.15) drop-shadow(0 0 8px rgba(234,84,85,.4))}100%{filter:brightness(1)}}@keyframes sf-scale{0%{transform:scale(1)}50%{transform:scale(1.025)}100%{transform:scale(1)}}.sf-pop{animation:sf-pop 400ms cubic-bezier(.34,1.56,.64,1) forwards}.sf-star-pop{animation:sf-star-pop 400ms cubic-bezier(.34,1.56,.64,1) forwards}.sf-sparkle{animation:sf-sparkle 600ms ease-out forwards}.sf-glow-finish{animation:sf-glow 400ms ease-out forwards}.sf-scale-finish{animation:sf-scale 400ms ease-out forwards}@media (prefers-reduced-motion:reduce){.sf-pop,.sf-star-pop,.sf-sparkle,.sf-glow-finish,.sf-scale-finish{animation:none!important}}`}</style>
   </section>;
+}
+
+function StarIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
+  return <svg viewBox="0 0 24 24" className={className} style={style} xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="currentColor" d="M12 2.5L14.85 8.75L21.5 9.5L16.5 14.1L17.9 20.5L12 17.1L6.1 20.5L7.5 14.1L2.5 9.5L9.15 8.75L12 2.5Z" /></svg>;
 }

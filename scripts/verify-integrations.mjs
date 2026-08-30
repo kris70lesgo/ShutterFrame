@@ -2,9 +2,9 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { TrueForge, mergeEventDelta } from "@truefoundry/trueforge-sdk";
 
-const MODEL_PROVIDER = "groq";
-const MODEL_ID = "openai/gpt-oss-20b";
-const MODEL_NAME = "gpt-oss-20b";
+const MODEL_PROVIDER = "deepseek";
+const MODEL_ID = "deepseek-v4-flash";
+const MODEL_NAME = "deepseek-v4-flash";
 const EXPECTED_RESPONSE = "SHUTTERFRAME_MODEL_OK";
 
 function loadLocalEnv() {
@@ -29,11 +29,11 @@ function contentToText(content) {
 }
 
 const localEnv = loadLocalEnv();
-const groqApiKey = process.env.GROQ_API_KEY ?? localEnv.GROQ_API_KEY;
+const deepseekApiKey = process.env.DEEPSEEK_API_KEY ?? localEnv.DEEPSEEK_API_KEY;
 const baseUrl = (process.env.TRUEFORGE_BASE_URL ?? localEnv.TRUEFORGE_BASE_URL ?? "http://127.0.0.1:8790").replace(/\/+$/, "");
 
-if (!groqApiKey) {
-  throw new Error("GROQ_API_KEY is required in .env.local or the environment.");
+if (!deepseekApiKey) {
+  throw new Error("DEEPSEEK_API_KEY is required in .env.local or the environment.");
 }
 
 const client = new TrueForge({ baseUrl, auth: false, timeoutInSeconds: 60, maxRetries: 0 });
@@ -44,18 +44,13 @@ await client.settings.modelProviders.createOrUpdate({
   manifest: {
     type: "custom",
     name: MODEL_PROVIDER,
-    baseUrl: "https://api.groq.com/openai/v1",
-    auth: { apiKey: groqApiKey },
+    baseUrl: "https://api.deepseek.com",
+    auth: { apiKey: deepseekApiKey },
     models: [
       {
         modelId: MODEL_ID,
         name: MODEL_NAME,
-        properties: { contextLength: 131072, maxOutputTokens: 8192, reasoningEfforts: ["low", "medium", "high"] },
-      },
-      {
-        modelId: "qwen/qwen3.6-27b",
-        name: "qwen3.6-27b",
-        properties: { contextLength: 131072, maxOutputTokens: 16384, reasoningEfforts: ["none"] },
+        properties: { contextLength: 1048576, maxOutputTokens: 8192, reasoningEfforts: ["none"] },
       },
     ],
   },
@@ -64,7 +59,7 @@ await client.settings.modelProviders.createOrUpdate({
 const agents = (await client.agents.list()).data;
 const existingAgent = agents.find((agent) => agent.name === "shutterframe-model-check");
 const agentManifest = {
-  model: { name: `${MODEL_PROVIDER}/${MODEL_NAME}`, params: { temperature: 0.00000001, maxTokens: 128, reasoningEffort: "low" } },
+  model: { name: `${MODEL_PROVIDER}/${MODEL_NAME}`, params: { temperature: 0, maxTokens: 128, thinking: { type: "disabled" } } },
   instructions: `Reply with exactly: ${EXPECTED_RESPONSE}`,
 };
 
@@ -97,13 +92,13 @@ try {
   }
 
   response = contentToText(modelMessage?.content).trim() || streamedContent.trim() || response;
-  if (response !== EXPECTED_RESPONSE) throw new Error(`TrueForge did not return the expected Groq response: ${JSON.stringify(response)}; events: ${eventTypes.join(", ")}`);
+  if (response !== EXPECTED_RESPONSE) throw new Error(`TrueForge did not return the expected DeepSeek response: ${JSON.stringify(response)}; events: ${eventTypes.join(", ")}`);
 
-  console.log("Groq credentials detected: yes");
-  console.log("Groq provider configured in TrueForge: yes");
+  console.log("DeepSeek credentials detected: yes");
+  console.log("DeepSeek provider configured in TrueForge: yes");
   console.log(`Model selected: ${MODEL_ID}`);
   console.log("TrueForge session created: yes");
-  console.log(`Groq response received through TrueForge: ${response}`);
+  console.log(`DeepSeek response received through TrueForge: ${response}`);
 } catch (error) {
   failure = error;
   throw error;

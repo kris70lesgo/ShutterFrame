@@ -13,7 +13,7 @@ export type EngineEvent = { type: string; toolCallId?: string; toolName?: string
 
 function agentManifest() {
   return {
-    model: { name: "deepseek/deepseek-v4-flash", params: { temperature: 0, maxTokens: 1200, thinking: { type: "disabled" } } },
+    model: { name: "deepseek/deepseek-v4-flash", params: { temperature: 0, maxTokens: 4096, thinking: { type: "disabled" } } },
     config: { sandbox: { enabled: true, fileDownloads: false }, iterationLimit: 40 },
     mcpServers: [{ name: NEON_MCP_SERVER_NAME, preload: true, enableTools: ["create_branch", "run_sql", "describe_table_schema", "get_database_tables", "delete_branch"], requireApprovalForTools: [] }],
     instructions: "You are ShutterFrame's deterministic rehearsal executor. The run instructions are complete: never call ask_user_question, never request approval, and never wait for user input. Use Neon MCP for every database operation and sandbox.exec only for staging and static inspection of server-provided artifacts. Never clone repositories. Never request, print, read, or expose credentials, connection strings, environment variables, auth headers, API keys, or Git credential files. Never connect the sandbox to a database. Never run database commands in the sandbox. Follow the ordered user instruction exactly and return a compact JSON summary after the tools finish.",
@@ -74,16 +74,25 @@ export async function runRehearsalEngineTurn(input: { sessionId: string; repoOwn
     phaseOneEvents = (await client.sessions.listEvents(input.sessionId)).data.filter((item) => rehearsalTurnIds.has(item.turnId));
   }
   if (!hasVerifiedFingerprint()) throw new Error("Artifact fingerprint mismatch; migration was not executed.");
+  const phaseOneText = phaseOneEvents.map((item) => JSON.stringify(redactUnknown(item.event))).join("\n");
+  if (/\bbr-[a-z0-9-]+\b/i.test(phaseOneText)) await createEvidence({ runId: input.runId, type: "check", name: "branch", status: "pass", data: { phase: "artifact_staging" } });
+  if (phaseOneEvents.some((item) => item.event.type === "sandbox.created")) await createEvidence({ runId: input.runId, type: "check", name: "sandbox", status: "pass", data: { phase: "artifact_staging" } });
+  if (phaseOneText.includes("artifacts/migration.sql")) await createEvidence({ runId: input.runId, type: "check", name: "artifactStage", status: "pass", data: { phase: "artifact_staging" } });
+  if (phaseOneText.includes(input.fingerprint)) await createEvidence({ runId: input.runId, type: "check", name: "fingerprintVerification", status: "pass", data: { phase: "artifact_staging" } });
+  let successfulLifecycle = false;
   try {
     await runPhase([
-      "Phase 2 only. Using the branch ID and exact migration SQL obtained in phase 1, you MUST call Neon run_sql to apply the migration against that branch. Then you MUST call Neon run_sql for SELECT 1 AS smoke_test. Never execute database commands in the sandbox. Do not delete the branch yet.",
-      "End with a compact factual summary of the two tool results.",
+      "Phase 2 only. Using the branch ID and exact migration SQL obtained in phase 1, call Neon run_sql to apply the migration against that branch, then call Neon run_sql for SELECT 1 AS smoke_test.",
+      "Continue in this same turn with deterministic validation: get_database_tables, describe affected table schemas when identifiable, run_sql querying pg_constraint for invalid/unvalidated foreign-key constraints, and a small row-count observation where identifiable.",
+      "Finally, call delete_branch for the disposable branch. Never execute database commands in the sandbox. Return compact JSON stating every check truthfully. Do not stop between these operations or request user input.",
     ].join("\n"), "auto");
-    await runPhase([
-      "Phase 3 only. On the same Neon branch, run deterministic validation: get_database_tables, describe affected table schemas when identifiable, run_sql querying pg_constraint for invalid/unvalidated foreign-key constraints, and a small row-count observation where identifiable. Then you MUST call delete_branch for the disposable branch. Return compact JSON stating every check truthfully.",
-    ].join("\n"), "auto");
+    successfulLifecycle = true;
   } finally {
-    try { await runPhase("Cleanup only. If the disposable Neon branch from this run still exists, call delete_branch now. Do not call any other tool.", "auto"); } catch { /* never replace the root failure */ }
+    // A completed phase has already deleted its branch. On any interruption,
+    // make one best-effort cleanup turn without adding latency to the happy path.
+    if (!successfulLifecycle) {
+      try { await runPhase("Cleanup only. If the disposable Neon branch from this run still exists, call delete_branch now. Do not call any other tool.", "auto"); } catch { /* never replace the root failure */ }
+    }
   }
   const persistedEvents = (await client.sessions.listEvents(input.sessionId)).data.filter((item) => rehearsalTurnIds.has(item.turnId));
   const persistedToolNames = new Map<string, string>();

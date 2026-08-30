@@ -47,7 +47,7 @@ export function IntegrationsContent() {
           </div>
           <div className="border border-white/5 rounded-[12px] bg-black/12 overflow-hidden">
              <div className="px-[18px] py-[16px] border-b border-white/5 flex flex-wrap gap-4 items-center justify-between">
-                <p className="text-[14px] text-[#A6A6A6]">Active provider: <span className="text-[#F2F2F2]">Groq</span></p>
+                <p className="text-[14px] text-[#A6A6A6]">Active provider: <span className="text-[#F2F2F2]">DeepSeek</span></p>
                 <div className="flex flex-wrap gap-2">
                   <Button variant="secondary">Test connection</Button>
                   <Button variant="secondary">Reconnect</Button>
@@ -55,12 +55,12 @@ export function IntegrationsContent() {
              </div>
              <SettingsRow label="Model">
                 <select className="h-[36px] bg-[#2A2A2A] border border-[#444] rounded-lg px-3 text-[14px] text-[#ECECEC] focus:border-[#555] focus:outline-none w-[200px]">
-                  <option>llama3-70b-8192</option>
-                  <option>llama3-8b-8192</option>
+                  <option>deepseek-v4-flash</option>
+                  <option>deepseek-v4-pro</option>
                 </select>
              </SettingsRow>
              <SettingsRow label="Base URL">
-                 <span className="text-[14px] text-[#F2F2F2]">https://api.groq.com/openai/v1</span>
+                 <span className="text-[14px] text-[#F2F2F2]">https://api.deepseek.com</span>
              </SettingsRow>
              <SettingsRow label="Session timeout" hideDivider>
                  <select className="h-[36px] bg-[#2A2A2A] border border-[#444] rounded-lg px-3 text-[14px] text-[#ECECEC] focus:border-[#555] focus:outline-none w-[200px]">

@@ -35,6 +35,7 @@ try {
   console.log(`MIGRATION_FINGERPRINT: ${result.events.some((event) => /[a-f0-9]{64}/i.test(JSON.stringify(event.payload))) ? "success" : "failure"}`);
   console.log("TRUEFORGE_AGENT: success");
   console.log("TRUEFORGE_SESSION: success");
+  console.log("MODEL_PROVIDER: DEEPSEEK");
   console.log(`NEON_BRANCH_CREATE: ${eventNames.has("create_branch") ? "success" : "failure"}`);
   console.log(`DAYTONA_SANDBOX_CREATE: ${result.events.some((event) => event.type === "sandbox.created") ? "success" : "failure"}`);
   console.log(`DAYTONA_ARTIFACT_STAGE: ${result.events.some((event) => JSON.stringify(event.payload).includes("artifacts/migration.sql")) ? "success" : "failure"}`);

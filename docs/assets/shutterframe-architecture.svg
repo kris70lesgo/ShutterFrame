@@ -1,0 +1,94 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">ShutterFrame architecture</title>
+  <desc id="desc">A secure migration rehearsal flow from GitHub pull request intake through TrueForge, DeepSeek, Neon MCP, Daytona sandbox verification, evidence, and human approval.</desc>
+  <rect width="1280" height="720" rx="38" fill="#F5F7FA"/>
+  <rect x="38" y="34" width="1204" height="652" rx="34" fill="white" stroke="#DDE7EF" stroke-width="2"/>
+  <text x="78" y="88" fill="#111827" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="34" font-weight="800">ShutterFrame secure rehearsal architecture</text>
+  <text x="80" y="122" fill="#667085" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="17">Credentials stay on trusted server/tool boundaries. Sandboxes receive repository content only.</text>
+
+  <defs>
+    <linearGradient id="green" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#14532D"/>
+      <stop offset="1" stop-color="#2F7D55"/>
+    </linearGradient>
+    <linearGradient id="teal" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#236778"/>
+      <stop offset="1" stop-color="#3296A7"/>
+    </linearGradient>
+    <linearGradient id="orange" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#F8C244"/>
+      <stop offset="1" stop-color="#EF4444"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#0F172A" flood-opacity="0.10"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#7B8A9A"/>
+    </marker>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <rect x="78" y="180" width="196" height="112" rx="22" fill="#FBFCFE" stroke="#DCE6EE"/>
+    <text x="106" y="224" fill="#111827" font-family="Inter, ui-sans-serif, system-ui" font-size="20" font-weight="800">GitHub PR</text>
+    <text x="106" y="253" fill="#667085" font-family="Inter, ui-sans-serif, system-ui" font-size="14">owner/repo + PR #</text>
+    <text x="106" y="274" fill="#667085" font-family="Inter, ui-sans-serif, system-ui" font-size="14">exact head commit</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="350" y="170" width="242" height="132" rx="24" fill="url(#green)"/>
+    <text x="382" y="217" fill="#F8FAFC" font-family="Inter, ui-sans-serif, system-ui" font-size="21" font-weight="800">ShutterFrame</text>
+    <text x="382" y="247" fill="#D9F99D" font-family="Inter, ui-sans-serif, system-ui" font-size="14">server-side intake</text>
+    <text x="382" y="269" fill="#E7F8D2" font-family="Inter, ui-sans-serif, system-ui" font-size="14">fetch SQL + SHA-256</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="676" y="170" width="234" height="132" rx="24" fill="url(#teal)"/>
+    <text x="708" y="217" fill="#F8FAFC" font-family="Inter, ui-sans-serif, system-ui" font-size="21" font-weight="800">TrueForge</text>
+    <text x="708" y="247" fill="#D4F4FA" font-family="Inter, ui-sans-serif, system-ui" font-size="14">named rehearsal agent</text>
+    <text x="708" y="269" fill="#D4F4FA" font-family="Inter, ui-sans-serif, system-ui" font-size="14">tool-call orchestration</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="990" y="180" width="190" height="112" rx="22" fill="#FBFCFE" stroke="#DCE6EE"/>
+    <text x="1018" y="224" fill="#111827" font-family="Inter, ui-sans-serif, system-ui" font-size="20" font-weight="800">DeepSeek</text>
+    <text x="1018" y="253" fill="#667085" font-family="Inter, ui-sans-serif, system-ui" font-size="14">tool-capable</text>
+    <text x="1018" y="274" fill="#667085" font-family="Inter, ui-sans-serif, system-ui" font-size="14">low-cost model</text>
+  </g>
+
+  <path d="M274 236H338" stroke="#7B8A9A" stroke-width="3" marker-end="url(#arrow)"/>
+  <path d="M592 236H664" stroke="#7B8A9A" stroke-width="3" marker-end="url(#arrow)"/>
+  <path d="M910 236H978" stroke="#7B8A9A" stroke-width="3" marker-end="url(#arrow)"/>
+  <path d="M1085 292V350C1085 367 1071 381 1054 381H882" stroke="#7B8A9A" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <g filter="url(#shadow)">
+    <rect x="138" y="410" width="238" height="128" rx="24" fill="#FBFCFE" stroke="#DCE6EE"/>
+    <text x="170" y="456" fill="#111827" font-family="Inter, ui-sans-serif, system-ui" font-size="20" font-weight="800">Daytona sandbox</text>
+    <text x="170" y="486" fill="#667085" font-family="Inter, ui-sans-serif, system-ui" font-size="14">stage supplied artifact</text>
+    <text x="170" y="508" fill="#667085" font-family="Inter, ui-sans-serif, system-ui" font-size="14">verify fingerprint</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="458" y="410" width="230" height="128" rx="24" fill="#FBFCFE" stroke="#DCE6EE"/>
+    <text x="490" y="456" fill="#111827" font-family="Inter, ui-sans-serif, system-ui" font-size="20" font-weight="800">Neon MCP</text>
+    <text x="490" y="486" fill="#667085" font-family="Inter, ui-sans-serif, system-ui" font-size="14">preview branch</text>
+    <text x="490" y="508" fill="#667085" font-family="Inter, ui-sans-serif, system-ui" font-size="14">run SQL + validate</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="770" y="410" width="220" height="128" rx="24" fill="url(#orange)"/>
+    <text x="802" y="456" fill="#FFFFFF" font-family="Inter, ui-sans-serif, system-ui" font-size="20" font-weight="800">Evidence</text>
+    <text x="802" y="486" fill="#FFF7ED" font-family="Inter, ui-sans-serif, system-ui" font-size="14">checks, logs, timings</text>
+    <text x="802" y="508" fill="#FFF7ED" font-family="Inter, ui-sans-serif, system-ui" font-size="14">completed / blocked / failed</text>
+  </g>
+
+  <path d="M793 302V350C793 367 779 381 762 381H257C240 381 226 395 226 410" stroke="#7B8A9A" stroke-width="3" marker-end="url(#arrow)"/>
+  <path d="M793 302V350C793 367 779 381 762 381H573V398" stroke="#7B8A9A" stroke-width="3" marker-end="url(#arrow)"/>
+  <path d="M688 474H758" stroke="#7B8A9A" stroke-width="3" marker-end="url(#arrow)"/>
+  <path d="M376 474H446" stroke="#7B8A9A" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <g>
+    <rect x="80" y="594" width="1120" height="54" rx="18" fill="#F8FAFC" stroke="#E2E8F0"/>
+    <text x="108" y="627" fill="#475467" font-family="Inter, ui-sans-serif, system-ui" font-size="15">Secret boundary:</text>
+    <text x="222" y="627" fill="#0F172A" font-family="Inter, ui-sans-serif, system-ui" font-size="15" font-weight="700">GitHub, Neon, Daytona, and model credentials never enter prompts, browser state, logs, evidence, or sandbox environment variables.</text>
+  </g>
+</svg>
