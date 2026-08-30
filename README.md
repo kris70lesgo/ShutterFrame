@@ -423,7 +423,5 @@ ShutterFrame’s secure-by-default choices:
 - Logs and evidence are redacted.
 - `.env.local` is ignored by git.
 
-## License and notices
 
-See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for third-party attribution notes.
 
