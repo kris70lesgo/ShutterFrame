@@ -1,7 +1,8 @@
 export type PullRequestIntakeRequest = { owner: string; repo: string; prNumber: number };
 export type PullRequestIntake = PullRequestIntakeRequest & { title: string; author: string; commitSha: string; baseBranch: string; changedFiles: string[]; migrationFiles: string[] };
 
-const migrationFile = /^(?:migrations|db\/migrations|database\/migrations)\/.+\.sql$/i;
+const preferredMigrationFile = /^(?:migrations|db\/migrations|database\/migrations)\/.+\.sql$/i;
+const sqlFile = /^(?!.*(?:^|\/)\.\.(?:\/|$))(?:[A-Za-z0-9_.-]+\/)*[A-Za-z0-9_.-]+\.sql$/i;
 
 export class InvalidPullRequestReferenceError extends Error {
   constructor() {
@@ -32,6 +33,13 @@ export function validatePullRequestIntakeRequest(value: unknown): PullRequestInt
   return { owner, repo, prNumber };
 }
 
+export function detectMigrationFiles(changedFiles: string[]) {
+  const sqlFiles = changedFiles.filter((file) => sqlFile.test(file));
+  const preferred = sqlFiles.filter((file) => preferredMigrationFile.test(file));
+  const fallback = sqlFiles.filter((file) => !preferredMigrationFile.test(file));
+  return [...preferred, ...fallback];
+}
+
 async function github(path: string) {
   const token = process.env.GITHUB_TOKEN;
   if (!token) throw new Error("GITHUB_TOKEN is not configured.");
@@ -57,5 +65,5 @@ export async function fetchPullRequestIntake(request: PullRequestIntakeRequest):
     changedFiles.push(...files.map(({ filename }) => filename));
     if (files.length < 100) break;
   }
-  return { ...validRequest, title: pr.title, author: pr.user.login, commitSha: pr.head.sha, baseBranch: pr.base.ref, changedFiles, migrationFiles: changedFiles.filter((file) => migrationFile.test(file)) };
+  return { ...validRequest, title: pr.title, author: pr.user.login, commitSha: pr.head.sha, baseBranch: pr.base.ref, changedFiles, migrationFiles: detectMigrationFiles(changedFiles) };
 }

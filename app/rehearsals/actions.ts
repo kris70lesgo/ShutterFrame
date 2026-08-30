@@ -13,7 +13,7 @@ export async function createRehearsalAction(_: IntakeFormState, formData: FormDa
     const request = validatePullRequestIntakeRequest({ owner: formData.get("owner"), repo: formData.get("repo"), prNumber: Number(formData.get("prNumber")) });
     const intake = await fetchPullRequestIntake(request);
     const migrationPath = intake.migrationFiles[0];
-    if (!migrationPath) return { error: "No SQL migration was found in this pull request." };
+    if (!migrationPath) return { error: "No .sql file was found in this pull request, so there is no migration to rehearse." };
     const rehearsal = await createQueuedRehearsal({ repoOwner: intake.owner, repoName: intake.repo, prNumber: intake.prNumber, commitSha: intake.commitSha, migrationPath });
     rehearsalId = rehearsal.id;
     await startRehearsalEngine(rehearsalId);
