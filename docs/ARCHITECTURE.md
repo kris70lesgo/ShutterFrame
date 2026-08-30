@@ -13,7 +13,7 @@ TrueForge (local in development)
   - persistent local SQLite state
         |
         v
-Groq (OpenAI-compatible inference)
+DeepSeek (OpenAI-compatible inference)
         |
         v
 GitHub MCP + Neon MCP + Daytona sandbox
@@ -30,7 +30,7 @@ execution evidence report → TrueForge approval checkpoint
 - **Next.js:** renders status and later brokers narrow, application-specific
   requests to TrueForge through `lib/trueforge`. It never runs agent-created
   shell/SQL code and never exposes secrets to the browser.
-- **TrueForge:** owns sessions, Groq model calls, MCP tool calls, sandbox use,
+- **TrueForge:** owns sessions, DeepSeek model calls, MCP tool calls, sandbox use,
   execution history, and human approval checkpoints. Local mode runs at
   `http://127.0.0.1:8790` with its normal SQLite storage.
 - **Neon MCP:** creates and destroys temporary *development* branches. A future

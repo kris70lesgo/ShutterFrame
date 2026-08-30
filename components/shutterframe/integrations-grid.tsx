@@ -7,7 +7,7 @@ import {
   NeonIcon,
   DaytonaIcon,
   TrueForgeIcon,
-  GroqIcon
+  DeepSeekIcon
 } from '@/components/icons/IntegrationIcons';
 
 const integrations = [
@@ -40,15 +40,15 @@ const integrations = [
     name: "TrueForge",
     icon: TrueForgeIcon,
     description: "Orchestrate rehearsal analysis, validation, and AI-assisted migration checks.",
-    metadata: "Provider: Groq",
+    metadata: "Provider: DeepSeek",
     connected: true,
   },
   {
-    id: "groq",
-    name: "Groq",
-    icon: GroqIcon,
+    id: "deepseek",
+    name: "DeepSeek",
+    icon: DeepSeekIcon,
     description: "Provides the model inference used by TrueForge during rehearsal analysis.",
-    metadata: "Model: configured",
+    metadata: "Model: V4 Flash",
     connected: true,
   },
 ];

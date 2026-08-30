@@ -40,8 +40,8 @@ async function verify() {
     console.log("RUN_CREATE: success");
     console.log("TRUEFORGE_SESSION: success");
 
-    if (result.session.response !== TRUEFORGE_REHEARSAL_RESPONSE) throw new Error("Expected Groq response was not received through TrueForge.");
-    console.log("GROQ_THROUGH_TRUEFORGE: success");
+    if (result.session.response !== TRUEFORGE_REHEARSAL_RESPONSE) throw new Error("Expected DeepSeek response was not received through TrueForge.");
+    console.log("DEEPSEEK_THROUGH_TRUEFORGE: success");
 
     if (result.run.status !== "ready" || result.run.trueforgeSessionId !== sessionId) throw new Error("TrueForge session ID was not persisted.");
     console.log("SESSION_ID_PERSISTED: success");

@@ -16,7 +16,7 @@ shape of data. ShutterFrame's intended workflow is:
 ## Architecture
 
 The root Next.js application is the UI and narrow server boundary. TrueForge
-owns agent sessions, Groq model calls, MCP access, sandbox use, and approval
+owns agent sessions, DeepSeek model calls, MCP access, sandbox use, and approval
 state. Neon supplies temporary branches; GitHub MCP supplies PR migrations; and
 Daytona executes untrusted migration/test work in isolation. See
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
@@ -34,7 +34,7 @@ Daytona executes untrusted migration/test work in isolation. See
 
 - Node.js 22.13 or newer (`.nvmrc`)
 - Corepack and pnpm 10.28.2
-- A Groq API key for TrueForge
+- A DeepSeek API key for TrueForge
 - A Neon development project, GitHub integration, and Daytona account only when
   you are ready to configure those capabilities
 
@@ -59,14 +59,14 @@ This runs the official local TrueForge process at `http://localhost:8790` using
 its normal local SQLite storage. In a second terminal, run `pnpm run doctor` or
 open the app; both surface whether it is reachable.
 
-## Configuring Groq in TrueForge
+## Configuring DeepSeek in TrueForge
 
-TrueForge owns the model integration. Configure Groq as a custom,
-OpenAI-compatible provider with base URL `https://api.groq.com/openai/v1` and
-the `GROQ_API_KEY` secret. ShutterFrame does not call Groq directly or expose
+TrueForge owns the model integration. Configure DeepSeek as a custom,
+OpenAI-compatible provider with base URL `https://api.deepseek.com` and
+the `DEEPSEEK_API_KEY` secret. ShutterFrame does not call DeepSeek directly or expose
 the key to the browser. `pnpm verify:integrations` configures the local
 TrueForge provider and verifies a small harness-mediated agent response using
-`openai/gpt-oss-20b`.
+`deepseek-v4-flash`.
 
 With TrueForge running, verify the complete path:
 
@@ -110,7 +110,7 @@ the cleanup-safe intake check.
 
 Apply `migrations/002_create_runs.sql` after the rehearsal migration. The
 server-only rehearsal-session service loads the saved rehearsal, creates a
-`starting` run, creates a TrueForge session using the existing Groq model
+`starting` run, creates a TrueForge session using the existing DeepSeek model
 provider, stores the resulting session ID, and marks the run `ready`. The only
 context sent to the session is repository owner/name, PR number, commit SHA,
 and migration path. It does not call Neon MCP, Daytona, or execute a migration.
@@ -121,7 +121,7 @@ With local TrueForge running, verify the end-to-end session and cleanup flow:
 pnpm verify:trueforge-session
 ```
 
-The command first validates the existing TrueForge-managed Groq provider, then
+The command first validates the existing TrueForge-managed DeepSeek provider, then
 creates and deletes temporary rehearsal/run records. It never prints secrets.
 
 ## Configuring Daytona
@@ -158,7 +158,7 @@ the end-to-end suite: `pnpm exec playwright install chromium`.
 ## Environment variables
 
 See `.env.example`. Only server-side names are used: `TRUEFORGE_BASE_URL`,
-`GROQ_API_KEY`, `NEON_API_KEY`, `NEON_PROJECT_ID`, `GITHUB_TOKEN`,
+`DEEPSEEK_API_KEY`, `NEON_API_KEY`, `NEON_PROJECT_ID`, `GITHUB_TOKEN`,
 `GITHUB_OWNER`, `GITHUB_REPO`, `SHUTTERFRAME_INTAKE_TOKEN`,
 `GITHUB_INTAKE_PR_NUMBER`, `DAYTONA_API_KEY`, and `DAYTONA_API_URL`. None use
 `NEXT_PUBLIC_`.

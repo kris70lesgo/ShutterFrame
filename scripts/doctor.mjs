@@ -36,7 +36,7 @@ async function main() {
   }
 
   console.log(mark(trueforgeReachable, "TrueForge reachable", "TrueForge not reachable"));
-  console.log(mark(Boolean(env.GROQ_API_KEY), "Groq key configured", "Groq key not configured"));
+  console.log(mark(Boolean(env.DEEPSEEK_API_KEY), "DeepSeek key configured", "DeepSeek key not configured"));
   console.log(mark(Boolean(env.NEON_API_KEY && env.NEON_PROJECT_ID), "Neon credentials configured", "Neon credentials not configured"));
   console.log(mark(Boolean(env.DAYTONA_API_KEY), "Daytona configured", "Daytona not configured"));
   console.log(mark(Boolean(env.GITHUB_TOKEN && env.GITHUB_OWNER && env.GITHUB_REPO), "GitHub credentials configured", "GitHub credentials not configured"));

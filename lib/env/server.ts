@@ -8,7 +8,6 @@ export const serverEnv = {
   trueforgeBaseUrl: trimTrailingSlash(
     process.env.TRUEFORGE_BASE_URL ?? "http://localhost:8790",
   ),
-  groqConfigured: Boolean(process.env.GROQ_API_KEY),
   geminiConfigured: Boolean(process.env.GEMINI_API_KEY),
   deepseekConfigured: Boolean(process.env.DEEPSEEK_API_KEY),
   neonProjectId: process.env.NEON_PROJECT_ID,

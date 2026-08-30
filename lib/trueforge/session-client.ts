@@ -12,7 +12,7 @@ function contentToText(content: unknown) {
 
 export async function startRehearsalSessionWithClient(client: TrueForge, request: TrueForgeSessionRequest): Promise<TrueForgeSessionResult> {
   const agentManifest = {
-    model: { name: "groq/gpt-oss-20b", params: { temperature: 0.00000001, maxTokens: 128, reasoningEffort: "low" } },
+    model: { name: "deepseek/deepseek-v4-flash", params: { temperature: 0, maxTokens: 128, thinking: { type: "disabled" } } },
     instructions: `You are the ShutterFrame rehearsal session harness. Do not invoke MCP tools, sandboxes, or external actions. Use only the supplied rehearsal context and reply with exactly: ${TRUEFORGE_REHEARSAL_RESPONSE}`,
   };
   const existingAgent = (await client.agents.list()).data.find((agent) => agent.name === AGENT_NAME);
